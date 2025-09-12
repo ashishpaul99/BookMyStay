@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+  "outDir": "./dist", // Output directory for compiled files
+  "target": "es2016", // JavaScript version to target
+  "module": "commonjs", // Use CommonJS modules (Node.js standard)
+  "esModuleInterop": true, // Better compatibility for importing CommonJS modules
+  "forceConsistentCasingInFileNames": true, // Prevent case-sensitive import errors
+  "strict": true, // Enable all strict type-checking options
+  "skipLibCheck": true // Skip type checking in declaration files
+  }
+}
+
