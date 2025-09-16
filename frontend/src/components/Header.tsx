@@ -7,7 +7,7 @@ const Header=()=>{
                     <Link to="/">BookMyStay.com</Link>
                 </span>
                 <span className="flex space-x-2 mr-20 ">
-                     <Link to="/sign-in" className="flex items-center text-blue-800 bg-white px-3 py-1 ">Sign In</Link>
+                     <Link to="/signin" className="flex items-center text-blue-800 bg-white px-3 py-1 ">Sign In</Link>
                 </span>
             </div>
         </div>
