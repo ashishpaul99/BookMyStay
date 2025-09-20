@@ -17,12 +17,11 @@ const userSchema=new mongoose.Schema({
     lastName:{type:String,required:true}
 })
 
-userSchema.pre("save",async function (next){
-    if(this.isModified('password')){
-        this.password=await bcrypt.hash(this.password,8)
-    }
-    next();
-})
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 8);
+  next();
+});
 
 // creating new model
 const User=mongoose.model<UserType>("User",userSchema);

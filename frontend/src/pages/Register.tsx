@@ -1,13 +1,16 @@
 import { useForm } from "react-hook-form";
+import {useMutation} from "@tanstack/react-query";
+import * as apiClient from "../api-client"; 
 
 // Define TypeScript type for form data
-type RegisterFormData = {
+export type RegisterFormData = {
   firstName: string;
   lastName: string;
   email: string;
   password: string;
   confirmPassword: string;
 };
+
 
 const Register = () => {
   // useForm hook gives us helpers to register inputs, validate, and track errors
@@ -18,9 +21,24 @@ const Register = () => {
     formState: { errors },
   } = useForm<RegisterFormData>();
 
-  // This function will run when form is successfully submitted (no validation errors)
+
+    // Mutation handles API call + success/error states
+  const mutation = useMutation(
+    {
+      mutationFn:apiClient.register, // call backend register function
+      onSuccess:()=>{
+         console.log("registration successful!"); 
+      },
+      // error comes from fetch request
+      onError:(error:Error)=>{
+        console.log(error.message); // log API error
+      }
+    }
+  )
+
+  // Runs only when form is valid (handleSubmit from react-hook-form)
   const onSubmit = handleSubmit((data) => {
-    console.log(data); // Later, you can send this to your backend API
+     mutation.mutate(data) // send form data to apiClient.register
   });
 
   return (
@@ -33,16 +51,13 @@ const Register = () => {
         {/* First Name */}
         <label className="text-gray-700 text-sm font-bold flex-1">
           First Name
-          <input
-            className="border rounded w-full py-1 px-2 font-bold"
-            {...register("firstName", {
-              required: "This field is required",
-            })}
-          />
+          <input className="border rounded w-full py-1 px-2 font-bold" {...register("firstName", { required: "This field is required"})}/>
+
           {/* Error message */}
           {errors.firstName && (
             <span className="text-red-500">{errors.firstName.message}</span>
           )}
+          
         </label>
 
         {/* Last Name */}
