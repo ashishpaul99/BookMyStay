@@ -1,6 +1,8 @@
 import { useForm } from "react-hook-form";
-import {useMutation} from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import * as apiClient from "../api-client"; 
+import { useAppContext } from "../contexts/AppContext";
+import { useNavigate } from "react-router-dom";
 
 // Define TypeScript type for form data
 export type RegisterFormData = {
@@ -11,9 +13,11 @@ export type RegisterFormData = {
   confirmPassword: string;
 };
 
-
 const Register = () => {
-  // useForm hook gives us helpers to register inputs, validate, and track errors
+  const { showToast } = useAppContext();
+  const navigate = useNavigate();
+
+  // useForm hook gives helpers to register inputs, validate, and track errors
   const {
     register,
     watch,
@@ -21,20 +25,17 @@ const Register = () => {
     formState: { errors },
   } = useForm<RegisterFormData>();
 
-
-    // Mutation handles API call + success/error states
-  const mutation = useMutation(
-    {
-      mutationFn:apiClient.register, // call backend register function
-      onSuccess:()=>{
-         console.log("registration successful!"); 
-      },
-      // error comes from fetch request
-      onError:(error:Error)=>{
-        console.log(error.message); // log API error
-      }
-    }
-  )
+  // useMutation handles API call + success/error states
+  const mutation = useMutation({
+    mutationFn: apiClient.register, // backend register function
+    onSuccess: () => {
+      showToast({ message: "Registration Successful!", type: "SUCCESS" });
+      navigate("/"); // redirect to homepage
+    },
+    onError: (error: Error) => {
+      showToast({ message: error.message, type: "ERROR" });
+    },
+  });
 
   // Runs only when form is valid (handleSubmit from react-hook-form)
   const onSubmit = handleSubmit((data) => {

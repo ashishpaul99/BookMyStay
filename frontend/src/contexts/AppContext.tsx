@@ -1,17 +1,46 @@
-// define type of context which holds all the properties that we are going to expost to out components or the things all the components can access
+import React, { useContext,useState} from "react";
+import Toast from "../components/Toast";
 
-type ToastMessage={
-    message:string;
-    type:"SUCCESS" | "ERROR";
-}
-type AppContext={
-    showToast:(toastMessage:ToastMessage)=> void;
-}
 
-// creating context
-const AppContext=React.createContext<AppContext | undefined>(undefined);
+// Toast message type
+type ToastMessage = {
+  message: string;
+  type: "SUCCESS" | "ERROR";
+};
 
-// creating provider - it wraps out componnets and give our components access to all the things in the context  
-export const AppContextProvider=()=>{
-    
-}
+// Context value type
+type AppContextType = {
+  showToast: (toastMessage: ToastMessage) => void;
+};
+
+// Create context
+const AppContext = React.createContext<AppContextType | undefined>(undefined);
+
+// Provider props
+type AppContextProviderProps = {
+  children: React.ReactNode;
+};
+
+// Provider component
+export const AppContextProvider = ({ children }: AppContextProviderProps) => {
+  const [toast,setToast]=useState<ToastMessage | undefined>(undefined)
+  return (
+    <AppContext.Provider
+      value={{
+        showToast: (toastMessage) => {
+           setToast(toastMessage);
+        }, 
+      }}
+    >
+      {toast && (<Toast message={toast.message} type={toast.type} onClose={()=>setToast(undefined)}/>)}
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+// Custom hook to let components easily access the AppContext provider
+export const useAppContext = () => {
+  const context = useContext(AppContext);
+  return context as AppContextType;
+};
+
