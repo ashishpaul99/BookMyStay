@@ -10,10 +10,12 @@ export const register = async (formData: RegisterFormData) => {
     // Make a POST request to the /register endpoint
     const response = await fetch(`${API_BASE_URL}/api/users/register`, {
         method: 'POST',
+        credentials:"include",
         headers: {
             "Content-Type": "application/json" // Tell server we're sending JSON
         },
-        body: JSON.stringify(formData) // Convert form data to JSON string
+        body: JSON.stringify(formData), // Convert form data to JSON string
+        
     });
 
     // Parse the JSON response

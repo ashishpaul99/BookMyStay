@@ -4,6 +4,7 @@ import { check, validationResult } from 'express-validator';
 import User from '../models/user';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import verifyToken from '../middleware/auth';
 
 // @route   POST /login
 // @desc    Authenticate user & get token
@@ -59,5 +60,12 @@ router.post(
     }
   }
 );
+
+// Route to validate token
+router.get("/validate-token", verifyToken, (req: Request, res: Response) => {
+  // If verifyToken passes, token is valid and req.userId is available
+  return res.status(200).json({ userId: req.userId });
+});
+
 
 export default router;
