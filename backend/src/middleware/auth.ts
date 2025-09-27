@@ -13,7 +13,7 @@ declare global {
 // Middleware to verify JWT token
 const verifyToken = (req: Request, res: Response, next: NextFunction) => {
   // Get token from cookies (key: auth_token)
-  const token = req.cookies["auth_token"];
+  const token = req.cookies['auth_token']
 
   // If no token is present, block the request
   if (!token) {
@@ -22,7 +22,7 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
 
   try {
     // Verify the token using the secret key
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_TOKEN as string);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY as string);
 
     // Extract userId from decoded payload and attach it to req object
     req.userId = (decoded as JwtPayload).userId;

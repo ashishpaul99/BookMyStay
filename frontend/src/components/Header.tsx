@@ -1,5 +1,7 @@
-import {Link} from "react-router-dom"
+import {Link} from "react-router-dom";
+import {useAppContext} from "../contexts/AppContext";
 const Header=()=>{
+    const {isLoggedIn}=useAppContext();
     return(
         <div className="bg-blue-800 py-6">
             <div className="container mx-auto flex justify-between max-w-6xl items-center">
@@ -7,7 +9,20 @@ const Header=()=>{
                     <Link to="/">BookMyStay.com</Link>
                 </span>
                 <span className="flex space-x-2 mr-20 ">
-                     <Link to="/signin" className="flex items-center text-blue-800 bg-white px-3 py-1 ">Sign In</Link>
+                     {
+                        isLoggedIn?(<>
+                           <Link to="/mybookings">My Bookings</Link>
+                           <Link to="/myhotels">My Hotels</Link>
+                           <button>Sign out</button>
+                        </>):
+                        (<>
+                           <Link to="/signin" className="flex items-center text-blue-800 bg-white px-3 py-1 ">Sign In</Link>
+                           <Link to="/register" className="flex items-center text-blue-800 bg-white px-3 py-1 ">Sign Up</Link>
+                        </>
+                        
+                        )
+                     }
+                     
                 </span>
             </div>
         </div>

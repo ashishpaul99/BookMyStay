@@ -1,5 +1,7 @@
 import React, { useContext,useState} from "react";
 import Toast from "../components/Toast";
+import {useQuery} from "@tanstack/react-query";
+import * as apiClient from "../api-client";
 
 
 // Toast message type
@@ -11,6 +13,7 @@ type ToastMessage = {
 // Context value type
 type AppContextType = {
   showToast: (toastMessage: ToastMessage) => void;
+  isLoggedIn:boolean;
 };
 
 // Create context
@@ -24,16 +27,30 @@ type AppContextProviderProps = {
 // Provider component
 export const AppContextProvider = ({ children }: AppContextProviderProps) => {
   const [toast,setToast]=useState<ToastMessage | undefined>(undefined)
+
+  const { isError } = useQuery({
+  queryKey: ["validateKey"],  // Unique key for caching and identifying this query
+  queryFn: apiClient.validateToken,// Function that will run to fetch/validate the token
+  retry: false, // Disables automatic retry on failure (default is true)
+  });
+
+
   return (
     <AppContext.Provider
-      value={{
-        showToast: (toastMessage) => {
-           setToast(toastMessage);
-        }, 
-      }}
-    >
-      {toast && (<Toast message={toast.message} type={toast.type} onClose={()=>setToast(undefined)}/>)}
-      {children}
+     value={{
+      showToast: (toastMessage) => {
+      setToast(toastMessage);
+     }, 
+      isLoggedIn: !isError, 
+    }}>
+    {toast && (
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(undefined)}
+      />
+    )}
+    {children}
     </AppContext.Provider>
   );
 };

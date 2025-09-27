@@ -46,7 +46,7 @@ router.post(
       );
 
       // 4️⃣ Store token in cookie
-      res.cookie('auth-token', token, {
+      res.cookie('auth_token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
         maxAge: 86400000, // 1 day
@@ -62,10 +62,10 @@ router.post(
 );
 
 // Route to validate token
-router.get("/validate-token", verifyToken, (req: Request, res: Response) => {
+router.get("/validatetoken", verifyToken, (req: Request, res: Response) => {
   // If verifyToken passes, token is valid and req.userId is available
   return res.status(200).json({ userId: req.userId });
 });
 
-
 export default router;
+
