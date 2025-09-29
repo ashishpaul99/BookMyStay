@@ -3,6 +3,10 @@ import { useMutation } from "@tanstack/react-query";
 import { useAppContext } from "../contexts/AppContext";
 import { useNavigate } from "react-router-dom";
 import * as apiClient from "../api-client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+
+
 
 // Define type for sign-in form fields
 export type SignInFormData = {
@@ -11,6 +15,7 @@ export type SignInFormData = {
 };
 
 const SignIn = () => {
+  const queryClient = useQueryClient();
   const { showToast } = useAppContext(); // Access global toast function
   const navigate = useNavigate(); // Hook to navigate programmatically
 
@@ -24,8 +29,9 @@ const SignIn = () => {
   // Mutation for sign-in API call
   const mutation = useMutation({
     mutationFn: apiClient.SignIn, // call signIn function from apiClient
-    onSuccess: () => {
+    onSuccess: async () => {
       showToast({ message: "Logged In Successfully!", type: "SUCCESS" });
+      await queryClient.invalidateQueries({ queryKey: ["validateKey"] });
       navigate("/"); // redirect to homepage
     },
     onError: (error: Error) => {
@@ -71,16 +77,18 @@ const SignIn = () => {
           )}
         </label>
       </div>
-
+      
       {/* Submit Button */}
-      <div>
+      <span className="flex justify-between items-center">
+        <span className="text-sm">Not registered?{" "}<Link to="/register" className="underline">Create an account here</Link>
+        </span>
         <button
           type="submit"
           className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500"
         >
           Sign In
         </button>
-      </div>
+      </span>
     </form>
   );
 };

@@ -67,5 +67,17 @@ router.get("/validatetoken", verifyToken, (req: Request, res: Response) => {
   return res.status(200).json({ userId: req.userId });
 });
 
+// Logout route: clears the auth_token cookie to log the user out
+router.post("/logout", (req: Request, res: Response) => {
+  res.cookie("auth_token", "", {
+    httpOnly: true, // prevent access from JavaScript
+    secure: process.env.NODE_ENV === "production", // only send over HTTPS in production
+    expires: new Date(0), // set cookie to be immediately expired
+  });
+
+  // Send confirmation response to frontend
+  res.status(200).json({ message: "Logged out successfully" });
+});
+
 export default router;
 

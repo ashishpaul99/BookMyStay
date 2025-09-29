@@ -3,6 +3,8 @@ import { useMutation } from "@tanstack/react-query";
 import * as apiClient from "../api-client"; 
 import { useAppContext } from "../contexts/AppContext";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 
 // Define TypeScript type for form data
 export type RegisterFormData = {
@@ -14,6 +16,7 @@ export type RegisterFormData = {
 };
 
 const Register = () => {
+  const queryClient=useQueryClient();
   const { showToast } = useAppContext();
   const navigate = useNavigate();
 
@@ -26,10 +29,12 @@ const Register = () => {
   } = useForm<RegisterFormData>();
 
   // useMutation handles API call + success/error states
+  // Mutation for register API call
   const mutation = useMutation({
     mutationFn: apiClient.register, // backend register function
-    onSuccess: () => {
+    onSuccess: async () => {
       showToast({ message: "Registration Successful!", type: "SUCCESS" });
+      await queryClient.invalidateQueries({queryKey:["validateKey"]});
       navigate("/"); // redirect to homepage
     },
     onError: (error: Error) => {
@@ -135,7 +140,9 @@ const Register = () => {
       </label>
 
       {/* Submit button */}
-      <span>
+      <span className="flex justify-between items-center">
+        <span className="text-sm">Already registered?{" "}<Link to="/signin" className="underline">Sign in here</Link>
+        </span>
         <button
           type="submit"
           className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500"
