@@ -12,9 +12,6 @@ mongoose
   .then(() => console.log("Connected to database:", process.env.MONGODB_CONNECTION_STRING))
   .catch((err) => console.error("Database connection error:", err));
 
-  
-
-
 const app=express();
 app.use(cookieParser());
 app.use(express.json()); //convert body in API to json

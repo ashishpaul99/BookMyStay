@@ -30,5 +30,4 @@ const SignOutButton = () => {
     </button>
   );
 };
-
 export default SignOutButton;
