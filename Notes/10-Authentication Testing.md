@@ -152,7 +152,7 @@ test("should allow user to sign in", async ({ page }) => {
 
 #### Generating a **unique random email address** each time the test runs
 -  Running this test more than once with a **hardcoded email** will cause an error (`User already exists`).
-- - The best fix is to **generate a random email** each time the test runs.
+- The best fix is to **generate a random email** each time the test runs.
 ```ts
 const testEmail = `test_register_${Math.floor(Math.random() * 90000) + 1000}@test.com`;
 
