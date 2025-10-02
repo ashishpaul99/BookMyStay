@@ -7,7 +7,13 @@ import authRoute from './routes/auth';
 import cookieParser from "cookie-parser"
 const port=7000;
 
-mongoose.connect(process.env.MONGODB_CONNECTION_STRING as string);
+mongoose
+  .connect(process.env.MONGODB_CONNECTION_STRING as string)
+  .then(() => console.log("Connected to database:", process.env.MONGODB_CONNECTION_STRING))
+  .catch((err) => console.error("Database connection error:", err));
+
+  
+
 
 const app=express();
 app.use(cookieParser());

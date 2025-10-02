@@ -3,6 +3,7 @@ node_modules/
 
 # Env files
 backend/.env
+backend/.env.e2e
 frontend/.env
 
 # Build outputs
