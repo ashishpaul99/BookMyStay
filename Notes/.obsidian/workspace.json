@@ -79,8 +79,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "2a77a89c9e6d865f",
@@ -173,12 +172,12 @@
   },
   "active": "cebe9d13515305d5",
   "lastOpenFiles": [
-    "9. Automated Tests Explained.md",
+    "Untitled.base",
     "10. Authentication Testing.md",
+    "9. Automated Tests Explained.md",
     "Untitled 3.base",
     "Untitled 2.base",
     "Untitled 1.base",
-    "Untitled.base",
     "Images/Pasted image 20251002232421.png",
     "Images/Pasted image 20251002224957.png",
     "Images/Pasted image 20251002161736.png",
