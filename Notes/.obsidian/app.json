@@ -1,6 +1,6 @@
 {
   "promptDelete": false,
-  "attachmentFolderPath": "/Images",
+  "attachmentFolderPath": "Images",
   "spellcheck": true,
   "newLinkFormat": "relative",
   "alwaysUpdateLinks": true,
