@@ -1,0 +1,28 @@
+/* Reduce line height in editor */
+.cm-content {
+    line-height: 1.3; /* default ~1.6 */
+}
+
+/* Reduce spacing in preview for lists */
+.markdown-preview-view ul,
+.markdown-preview-view ol {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+}
+
+/* Reduce spacing between paragraphs */
+.markdown-preview-view p {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+}
+
+/* Optional: reduce heading spacing */
+.markdown-preview-view h1,
+.markdown-preview-view h2,
+.markdown-preview-view h3,
+.markdown-preview-view h4,
+.markdown-preview-view h5,
+.markdown-preview-view h6 {
+    margin-top: 0.3em;
+    margin-bottom: 0.3em;
+}
