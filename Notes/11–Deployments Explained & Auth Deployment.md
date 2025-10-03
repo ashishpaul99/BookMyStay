@@ -132,10 +132,13 @@ npm run build
 - After confirming locally, **create a GitHub repository**, push your code, and deploy it to Render.com.
 ## 11.7 Setup GitHub
 `04:32:00`
-- Create new repository.
-- `git init`
-- Add git Ignore file at the top level `.gitignore`
-	- it excludes certain files from being committed to source control 
+- Create a new repository on GitHub.
+- Initialize Git locally: `git init`
+- Add a **.gitignore** file at the **top level** of your project.
+	- Purpose: Excludes certain files/folders (like `node_modules`, `.env`, `.vscode`) from being committed to the repository.
+- Deploy your project to the GitHub repository.
+- Setup a render account and deploy project code.
+**.gitignore file**
 ```gitignore
 # Node modules
 node_modules/
@@ -153,8 +156,8 @@ backend/dist/
 frontend/dist/
 ```
 
-
-
+## 11.8 MongoDB Security Settings
+`04:36:00`
 
   
 

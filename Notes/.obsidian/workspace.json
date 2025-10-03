@@ -35,8 +35,7 @@
               "title": "11–Deployments Explained & Auth Deployment"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -186,11 +185,11 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "a7daed5a76f3a2b8",
+  "active": "cebe9d13515305d5",
   "lastOpenFiles": [
+    "11–Deployments Explained & Auth Deployment.md",
     "Images/Pasted image 20251003172259.png",
     "10-Authentication Testing.md",
-    "11–Deployments Explained & Auth Deployment.md",
     "Images/Pasted image 20251003143326.png",
     "Images/Pasted image 20251003143237.png",
     "09-Automated Tests Explained.md",
@@ -211,7 +210,6 @@
     "Untitled 17.base",
     "Untitled 20.base",
     "Untitled 19.base",
-    "Images/Pasted image 20251002155251.png",
     "Images/Pasted.md",
     "Note.md",
     "Hotel Booking App/Image.md",

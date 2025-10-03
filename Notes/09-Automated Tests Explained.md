@@ -104,9 +104,8 @@ $ npm run e2e
 [nodemon] starting `ts-node ./src/index.ts`
 http://localhost:7000/
 server is running on port 7000
-Connected to database: mongodb+srv://ashishpaul99:Ashish777@cluster0.exm5h3r.mongodb.net/e2e-test-db?retryWrites=true&w=majority&appName=Cluster0
+Connected to database: mongodb+srv://ashishpaul99:passsword@cluster0.exm5h3r.mongodb.net/e2e-test-db?retryWrites=true&w=majority&appName=Cluster0
 ```
-
 ###  **Remove Test Code from index.ts**
 - Delete any temporary code you added for testing purposes.
 - Remove the console.log statement that prints the connection string for security reasons.
