@@ -6,6 +6,9 @@ backend/.env
 backend/.env.e2e
 frontend/.env
 
+# VSCode settings
+.vscode/
+
 # Build outputs
 backend/dist/
 frontend/dist/

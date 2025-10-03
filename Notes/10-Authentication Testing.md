@@ -1,3 +1,4 @@
+# 10-Authentication Testing
 - Inside the project directory, create a new folder named **`e2e-tests`**.
 - Install the Playwright framework in the `e2e-tests` folder using: `npm init playwright@latest`
 -  This will install the Playwright package along with the required configuration and example tests. ✅

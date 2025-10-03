@@ -13,15 +13,30 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "10-Authentication Testing.md",
+                "file": "09-Automated Tests Explained.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "10-Authentication Testing"
+              "title": "09-Automated Tests Explained"
+            }
+          },
+          {
+            "id": "a7daed5a76f3a2b8",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "11–Deployments Explained & Auth Deployment.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "11–Deployments Explained & Auth Deployment"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -79,7 +94,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "2a77a89c9e6d865f",
@@ -170,11 +186,14 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "fe1b1e70fcd7b3b6",
+  "active": "a7daed5a76f3a2b8",
   "lastOpenFiles": [
-    "Untitled.base",
     "10-Authentication Testing.md",
+    "11–Deployments Explained & Auth Deployment.md",
+    "Images/Pasted image 20251003143326.png",
+    "Images/Pasted image 20251003143237.png",
     "09-Automated Tests Explained.md",
+    "Untitled.base",
     "Untitled 3.base",
     "Untitled 2.base",
     "Untitled 1.base",
@@ -192,8 +211,6 @@
     "Untitled 20.base",
     "Untitled 19.base",
     "Images/Pasted image 20251002155251.png",
-    "Images/Pasted image 20251002160907.png",
-    "Images/Pasted image 20251002154430.png",
     "Images/Pasted.md",
     "Note.md",
     "Hotel Booking App/Image.md",

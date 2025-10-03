@@ -3,7 +3,7 @@ import type { RegisterFormData } from "./pages/Register";
 import type {SignInFormData} from "./pages/SignIn"
 
 // Import environment variable for API base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "" ;
 
 
 // Function to sign in a user
