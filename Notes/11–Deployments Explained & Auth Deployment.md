@@ -155,9 +155,47 @@ frontend/.env
 backend/dist/
 frontend/dist/
 ```
-
 ## 11.8 MongoDB Security Settings
 `04:36:00`
-
-  
-
+- Before deploying to Render, we need to add Render’s IP addresses to the MongoDB access list.  
+- This ensures that the Render server can connect to the database.
+- Go to MongoDB → Development Database → Network Access.  
+- Add the following Render IP addresses to the whitelist:  
+	 - 3.75.158.163 
+	- 3.125.183.140 
+	- 35.157.117.28
+- ![](Images/Pasted%20image%2020251004040058.png)
+## 11.9 Deploy to Render
+- Go to **Render.com** 
+- Sign Up with **GitHub**.
+- We are deploying everything as part of our backend server you want to go head and click on Web Service.
+- You connect Render with your GitHub
+- Choose → **Only select repositories** ✅ (Recommended)
+	- You pick only the repos you actually want to deploy (e.g. BookMyStay).
+    - Render won’t see your other projects.
+    - More secure and cleaner.
+1. Name → A unique name for your web service → bookmystay
+- root of the project will be the top level folder
+	- backend
+	- frontend
+1. Build Command → `cd frontend && npm install && npm run build && cd ../backend && npm run build`
+	- This command goes into the frontend folder, installs all dependencies, and builds the static assets into the `dist` folder.  
+	- On Render, this process is automated — it runs the same steps we would normally do manually in our IDE.  
+	- Both the frontend and backend are built in sequence.  
+	- Command: cd frontend && npm install && npm run build && cd ../backend && npm run build
+- Command → cd frontend && npm install && npm run build && cd ../backend && npm run build
+	-  `cd frontend` → go into the **frontend folder**.
+	- `npm install` → install frontend dependencies.
+	- `npm run build` → create a production build of the frontend.
+	- `cd ../backend` → go back up one folder, then into the **backend folder**.
+	- `npm run build` → build the backend (e.g. transpile TypeScript → JavaScript).
+1. Start Command → `cd backend && npm start`
+	- `cd backend` → move into the **backend folder**.
+	- `npm start` → run the start script defined in `package.json` (usually starts the backend server).
+2. Add Environment Variable   → add backend environment variables
+- Paste them in key and value
+	- MONGODB_CONNECTION_STRING
+	- JWT_SECRET_KEY
+- Add Node Version
+![](Images/Pasted%20image%2020251004045658.png)
+1. Click on **Deploy Web Service**
