@@ -11,7 +11,7 @@
 - This approach makes it easier to manage configuration, settings, and deployment since everything is within a single project.
 - Alternatively, the frontend and backend can be deployed on **separate servers**. This is the standard approach for large-scale applications (multiple backend servers handling traffic with a single frontend server). But for simplicity, we deploy both on the same server here.
 
-  ![[Pasted image 20251003143326.png|600*100]]
+![](Images/Pasted%20image%2020251003172259.png)
 ## 11.2 Deployment Build Scripts
 `04:24:00`
 ### 1. Configure Backend Build Scripts
