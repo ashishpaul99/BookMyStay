@@ -160,11 +160,14 @@ frontend/dist/
 - Before deploying to Render, we need to add Render’s IP addresses to the MongoDB access list.  
 - This ensures that the Render server can connect to the database.
 - Go to MongoDB → Development Database → Network Access.  
+- MongoDB Atlas **only allows connections from whitelisted IP addresses**.
+- Check Render logs → it usually shows IPs your service is using
 - Add the following Render IP addresses to the whitelist:  
-	 - 3.75.158.163 
-	- 3.125.183.140 
-	- 35.157.117.28
-- ![](Images/Pasted%20image%2020251004040058.png)
+	- 44.229.227.142
+	- 54.188.71.94
+	- 52.13.128.108
+
+![](Images/Pasted%20image%2020251004061142.png)
 ## 11.9 Deploy to Render
 - Go to **Render.com** 
 - Sign Up with **GitHub**.
@@ -178,24 +181,28 @@ frontend/dist/
 - root of the project will be the top level folder
 	- backend
 	- frontend
-1. Build Command → `cd frontend && npm install && npm run build && cd ../backend && npm run build`
+2. Build Command → `cd frontend && npm ci && npm run build && cd ../backend && npm ci && npm run build`
 	- This command goes into the frontend folder, installs all dependencies, and builds the static assets into the `dist` folder.  
 	- On Render, this process is automated — it runs the same steps we would normally do manually in our IDE.  
 	- Both the frontend and backend are built in sequence.  
 	- Command: cd frontend && npm install && npm run build && cd ../backend && npm run build
-- Command → cd frontend && npm install && npm run build && cd ../backend && npm run build
-	-  `cd frontend` → go into the **frontend folder**.
-	- `npm install` → install frontend dependencies.
-	- `npm run build` → create a production build of the frontend.
-	- `cd ../backend` → go back up one folder, then into the **backend folder**.
-	- `npm run build` → build the backend (e.g. transpile TypeScript → JavaScript).
-1. Start Command → `cd backend && npm start`
+- Command →`cd frontend && npm ci && npm run build && cd ../backend && npm ci && npm run build
+	-  `cd frontend` → Go to the **frontend folder**.
+	- `npm ci` → Install frontend dependencies exactly as in `package-lock.json` (clean install).
+	- `npm run build` → Build the frontend (Vite + TypeScript → `dist/` folder).
+	- `cd ../backend` → Go to the **backend folder**.
+	- `npm ci` → Install backend dependencies exactly as in `package-lock.json`.
+	- `npm run build` → Compile backend TypeScript to JavaScript in `dist/`.
+- ✅ **Purpose:** Build **both frontend and backend** before starting the server on Render.
+3. Start Command → `cd backend && npm start`
 	- `cd backend` → move into the **backend folder**.
 	- `npm start` → run the start script defined in `package.json` (usually starts the backend server).
-2. Add Environment Variable   → add backend environment variables
+4. Add Environment Variable   → add backend environment variables
 - Paste them in key and value
 	- MONGODB_CONNECTION_STRING
 	- JWT_SECRET_KEY
 - Add Node Version
 ![](Images/Pasted%20image%2020251004045658.png)
-1. Click on **Deploy Web Service**
+5. Click on **Deploy Web Service**
+- Deployed on the URL : `https://bookmystay-b9qd.onrender.com/`
+![](Images/Pasted%20image%2020251004060634.png)

@@ -8,7 +8,6 @@ import cookieParser from "cookie-parser"
 import path from "path"
 const port=7000;
 
-
 mongoose
   .connect(process.env.MONGODB_CONNECTION_STRING as string)
   .then(() => console.log("Connected to database:", process.env.MONGODB_CONNECTION_STRING))
