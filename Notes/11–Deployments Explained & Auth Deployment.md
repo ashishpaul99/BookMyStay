@@ -204,5 +204,5 @@ frontend/dist/
 - Add Node Version
 ![](Images/Pasted%20image%2020251004045658.png)
 5. Click on **Deploy Web Service**
-- Deployed on the URL : `https://bookmystay-b9qd.onrender.com/`
+- Deployed on the URL : https://bookmystay-b9qd.onrender.com/
 ![](Images/Pasted%20image%2020251004060634.png)
