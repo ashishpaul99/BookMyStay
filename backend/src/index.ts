@@ -7,19 +7,25 @@ import authRoute from './routes/auth';
 import cookieParser from "cookie-parser"
 import path from "path"
 const port=7000;
+import { v2 as cloudinary } from 'cloudinary';
+import myHotelRoutes from './routes/my-hotels';
+
+// Initialize Cloudinary connection with credentials from environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 mongoose
   .connect(process.env.MONGODB_CONNECTION_STRING as string)
   .then(() => console.log("Connected to database:", process.env.MONGODB_CONNECTION_STRING))
   .catch((err: any) => console.error("Database connection error:", err));
 
-
 const app=express();
 app.use(cookieParser());
 app.use(express.json()); //convert body in API to json
 app.use(express.urlencoded({extended:true}));
-
-
 
 // CORS configuration - Apply CORS to all routes
 app.use(cors({
@@ -30,7 +36,7 @@ app.use(cors({
 app.use(express.static(path.join(__dirname,"../../frontend/dist")))
 app.use("/api/auth",authRoute)
 app.use("/api/users",userRoute);
-
+app.use("/api/my-hotels", myHotelRoutes);
 
 app.listen(port,()=>{
    console.log(`http://localhost:7000/`)

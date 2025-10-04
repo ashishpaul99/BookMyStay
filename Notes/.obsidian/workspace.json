@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "2eccda79b51acb74",
+        "id": "8097a63ddcd8ba61",
         "type": "tabs",
         "children": [
           {
-            "id": "a7daed5a76f3a2b8",
+            "id": "10d5207d79c14ffe",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "11–Deployments Explained & Auth Deployment.md",
+                "file": "12-Add Hotel Feature Overview.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "11–Deployments Explained & Auth Deployment"
+              "title": "12-Add Hotel Feature Overview"
             }
           }
         ]
@@ -171,26 +171,27 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "a7daed5a76f3a2b8",
+  "active": "10d5207d79c14ffe",
   "lastOpenFiles": [
+    "Untitled.md",
+    "12-Add Hotel Feature Overview.md",
+    "Images/Pasted image 20251004144602.png",
+    "Images/Pasted image 20251004144558.png",
+    "Images/Pasted image 20251004144551.png",
+    "Images/Pasted image 20251004142141.png",
+    "Images/Pasted image 20251004142138.png",
+    "Images/Pasted image 20251004142111.png",
+    "Images/Pasted image 20251004142047.png",
+    "Images/Pasted image 20251004140007.png",
+    "11–Deployments Explained & Auth Deployment.md",
     "Images/Pasted image 20251004061142.png",
     "Images/Pasted image 20251004060634.png",
-    "Images/Pasted image 20251004045658.png",
-    "Images/Pasted image 20251004040058.png",
     "09-Automated Tests Explained.md",
-    "11–Deployments Explained & Auth Deployment.md",
-    "Images/Pasted image 20251003172259.png",
     "10-Authentication Testing.md",
-    "Images/Pasted image 20251003143326.png",
-    "Images/Pasted image 20251003143237.png",
     "Untitled.base",
     "Untitled 3.base",
     "Untitled 2.base",
     "Untitled 1.base",
-    "Images/Pasted image 20251002232421.png",
-    "Images/Pasted image 20251002224957.png",
-    "Images/Pasted image 20251002161736.png",
-    "Images/Pasted image 20251002161717.png",
     "Untitled 22.base",
     "Untitled 23.base",
     "Untitled 21.base",
