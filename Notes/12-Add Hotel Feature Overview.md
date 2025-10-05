@@ -108,7 +108,7 @@ export default router;
 npm i multer
 npm i -D @types/multer
 ```
-#### Configuring 
+#### 2. Configuring 
 - Go to `my-hotels.ts` file 
 - write few lines of config to multer to tell it what to expect.
 - The **storage** setting tells Multer to keep uploaded files (images) **in memory** instead of saving them to disk, since we’re forwarding them directly to Cloudinary.
@@ -123,14 +123,212 @@ npm i -D @types/multer
 	- Form field name → `imageFiles`
 	- Maximum number of files → `6`
  **backend/routes/my-hotels**
+```ts
+import multer from "multer";
+
+// Store uploaded files in memory (not on disk)
+const storage = multer.memoryStorage();
+
+// Initialize multer with storage and file size limit (5MB)
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+});
+```
+#### 3. Upload the images to Cloudinary.
+1. **Encoding Images**
+	- Each uploaded image is first **converted to a Base64 string**.
+	- We use `Buffer.from(image.buffer).toString("base64")` to achieve this.
+	- This conversion allows Cloudinary to process the image data.
+2. **Creating Data URI**
+	- The Base64 string alone isn’t enough — Cloudinary also needs to know the **MIME type** (like `image/png` or `image/jpeg`).
+	- We combine both into a **Data URI** format: `data:<mimetype>;base64,<base64string>
+	- This Data URI contains all image information needed for upload.
+3. **Uploading to Cloudinary**
+	- Each image is uploaded using Cloudinary’s SDK: `cloudinary.v2.uploader.upload(dataURI)
+	- The response includes details like image URL, public ID, format, etc.
+	- We extract and use the **`secure_url`**, which is the hosted image link.
+4. **Handling Multiple Images**
+	- Since uploads are **asynchronous**, we create an **array of promises** using `.map()`
+	- This allows multiple uploads to happen **in parallel**.
+	- Using `Promise.all()`, we wait until **all uploads complete** before moving forward.
+5. **Storing Uploaded URLs**
+	- Once uploads are done, we get an **array of URLs** (`imageUrls`).
+	- These URLs can then be saved in the database along with the hotel data.
+ **backend/routes/my-hotels**
+```ts
+// Extract image files from multer
+const imageFiles = req.files as Express.Multer.File[];
+
+// Get other hotel details from the request body
+const newHotel = req.body;
+
+// Upload images to Cloudinary
+const uploadPromises = imageFiles.map(async (image) => {
+  const b64 = Buffer.from(image.buffer).toString("base64"); // Convert buffer to Base64
+  const dataURI = `data:${image.mimetype};base64,${b64}`;   // Create Data URI (MIME + Base64)
+
+  const res = await cloudinary.v2.uploader.upload(dataURI);  // Upload to Cloudinary
+  return res.secure_url;                                     // Return HTTPS image URL
+});
+
+// Wait for all uploads to finish
+const imageUrls = await Promise.all(uploadPromises);
+
+```
+
+#### 4. If the upload is successful, add the URLs to the new hotel object
+- Add an **error handler** in the `catch` block.
+- Before saving the hotel to the database, a **hotel model** should be created.
+##### 1. Creating hotel database
+- Create a new file named **`hotel.ts`** inside `backend/src/models`.
+- Define a **TypeScript type** — this helps with **IntelliSense** and type safety when creating new hotels.
+- Once the **hotel schema** is defined, you can start **saving hotels to the database**.
+**backend/src/models/hotels.ts**
+```ts
+import mongoose from "mongoose";
+
+// Hotel type definition
+export type HotelType = {
+  _id: string;
+  userId: string;          // ID of user who created the hotel
+  name: string;            // Hotel name
+  city: string;            // City location
+  country: string;         // Country location
+  description: string;     // Hotel description
+  type: string;            // Hotel type (e.g., resort, villa)
+  adultCount: number;      // Max number of adults
+  childCount: number;      // Max number of children
+  facilities: string[];    // Hotel amenities
+  pricePerNight: number;   // Cost per night
+  starRating: number;      // Rating between 1–5
+  imageUrls: string[];     // Uploaded image URLs
+  lastUpdated: Date;       // Last updated timestamp
+};
+
+// Hotel schema
+const hotelSchema = new mongoose.Schema<HotelType>({
+  userId: { type: String, required: true },
+  name: { type: String, required: true, unique: true },
+  city: { type: String, required: true },
+  country: { type: String, required: true },
+  description: { type: String, required: true }, // fixed spelling
+  type: { type: String, required: true },
+  adultCount: { type: Number, required: true },
+  childCount: { type: Number, required: true },
+  facilities: [{ type: String, required: true }],
+  pricePerNight: { type: Number, required: true },
+  starRating: { type: Number, required: true, min: 1, max: 5 },
+  imageUrls: [{ type: String, required: true }],
+  lastUpdated: { type: Date, required: true }
+});
+
+// Create hotel model
+const Hotel = mongoose.model<HotelType>("Hotel", hotelSchema);
+export default Hotel;
+```
+
+#### 5. Populating and Securing the New Hotel Object
+##### 1. Assigning Type to `newHotel`
+- Give the **`HotelType`** type to the `newHotel` variable in `my-hotels.ts`.
+- This helps with **IntelliSense**, **type checking**, and ensures data consistency.
+##### 2. Populating Hotel Data
+- Before saving the hotel to the database, **populate the rest** of the `newHotel` object.
+- `newHotel.imageUrls` → store the **image URLs** returned by Cloudinary in this field.
+- Add the **`lastUpdated`** field to the form to track when the hotel was last modified.
+##### 3. Setting the User ID
+- Set `newHotel.userId = req.userId` → this **userId** is obtained from the **request**.
+- When the browser sends a request, it includes an **HTTP auth cookie**.
+- A **middleware** parses this cookie, validates it, and then adds the `userId` to the request object.
+```ts
+ newHotel.imageUrls=imageUrls;
+ newHotel.lastUpdated=new Date();
+ newHotel.userId=req.userId;
+```
+##### 4. Security Consideration
+- The reason we take `userId` from the **auth token or cookie** instead of the frontend (UI) is for **security**:
+    - If the frontend had a `userId` input field, anyone could manually enter any ID.
+    - Using the token ensures the ID belongs to the **currently logged-in user**.
+- This approach makes sure that the hotel is created **securely** under the correct user account.
+
+ **backend/routes/my-hotels.ts**
  ```ts
- import multer from "multer";
- const storage=multer.memoryStorage();
+import express, {Request,Response} from "express";
+import multer from "multer";
+import cloudinary from "cloudinary"
+import {HotelType} from "../models/hotel";
+const router=express.Router();
+
+// Store uploaded files in memory (not on disk)
+const storage = multer.memoryStorage();
+
+// Initialize multer with storage and file size limit (5MB)
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+});
+
+
+// api/my-hotels
+router.post(
+    "/",
+    upload.array("imageFiles",6),
+    async (req:Request,res:Response)=>{
+        try{
+            //Extract image files from multer
+            const imageFiles=req.files as Express.Multer.File[];
+
+            //Get other hotel details from the request body
+            const newHotel:HotelType=req.body;
+
+            //Upload the images to Cloudinary.
+            const uploadPromises=imageFiles.map(async(image)=>{
+            
+            // Convert image  buffer to Base64 string 
+            const b64=Buffer.from(image.buffer).toString("base64"); 
+
+			// Construct Data URI (MIME type + Base64 data)
+            let dataURI="data:"+image.mimetype+";base64,"+b64;  
+			
+			// Upload to Cloudinary and get the response
+            const res=await cloudinary.v2.uploader.upload(dataURI);
+            
+            return res.url;  // Return the secure URL of the uploaded image
+     })
+
+
+      // Wait for all image uploads to finish
+	  const imageUrls=await Promise.all(uploadPromises);
+       newHotel.imageUrls=imageUrls;
+       newHotel.lastUpdated=new Date();
+       newHotel.userId=req.userId;
+
+            // 2. If the upload is successful, add the URLs to the new hotel object.
+
+  
+
+            // 3. Save the new hotel in the database.
+
+  
+
+            // 4. Return a 201 status response.
+
+  
+  
+
+        }catch(e){
+          console.log("Error creating hotel:",e);
+          res.status(500).json({message:"Something went wrong"})
+        }
+    }
+)
+
+export default router;
  ```
-
-
-
-
 
 # Quick Revision
 ### 1. Manage Hotel Form
