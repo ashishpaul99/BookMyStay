@@ -24,10 +24,13 @@ type AppContextProviderProps = {
   children: React.ReactNode;
 };
 
-// Provider component
+// Create the Provider Component
+// toast → stores the currently active toast message.
+// setToast → updates it.
 export const AppContextProvider = ({ children }: AppContextProviderProps) => {
   const [toast,setToast]=useState<ToastMessage | undefined>(undefined)
 
+  // Validate user login with React Query
   const { isError } = useQuery({
   queryKey: ["validateKey"],  // Unique key for caching and identifying this query
   queryFn: apiClient.validateToken,// Function that will run to fetch/validate the token

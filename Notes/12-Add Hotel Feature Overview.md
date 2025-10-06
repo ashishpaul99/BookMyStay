@@ -182,7 +182,7 @@ const imageUrls = await Promise.all(uploadPromises);
 #### 4. If the upload is successful, add the URLs to the new hotel object
 - Add an **error handler** in the `catch` block.
 - Before saving the hotel to the database, a **hotel model** should be created.
-##### 1. Creating hotel database
+##### 4.1 Creating hotel database
 - Create a new file named **`hotel.ts`** inside `backend/src/models`.
 - Define a **TypeScript type** — this helps with **IntelliSense** and type safety when creating new hotels.
 - Once the **hotel schema** is defined, you can start **saving hotels to the database**.
@@ -230,15 +230,15 @@ const Hotel = mongoose.model<HotelType>("Hotel", hotelSchema);
 export default Hotel;
 ```
 
-#### 5. Populating and Securing the New Hotel Object
-##### 1. Assigning Type to `newHotel`
+#### 5. Building and Validating the New Hotel Object
+##### 5.1 Assigning Type to `newHotel`
 - Give the **`HotelType`** type to the `newHotel` variable in `my-hotels.ts`.
 - This helps with **IntelliSense**, **type checking**, and ensures data consistency.
-##### 2. Populating Hotel Data
+##### 5.2 Populating Hotel Data
 - Before saving the hotel to the database, **populate the rest** of the `newHotel` object.
 - `newHotel.imageUrls` → store the **image URLs** returned by Cloudinary in this field.
 - Add the **`lastUpdated`** field to the form to track when the hotel was last modified.
-##### 3. Setting the User ID
+##### 5.3 Setting the User ID
 - Set `newHotel.userId = req.userId` → this **userId** is obtained from the **request**.
 - When the browser sends a request, it includes an **HTTP auth cookie**.
 - A **middleware** parses this cookie, validates it, and then adds the `userId` to the request object.
@@ -247,19 +247,53 @@ export default Hotel;
  newHotel.lastUpdated=new Date();
  newHotel.userId=req.userId;
 ```
-##### 4. Security Consideration
+##### 5.4 Security Consideration
 - The reason we take `userId` from the **auth token or cookie** instead of the frontend (UI) is for **security**:
     - If the frontend had a `userId` input field, anyone could manually enter any ID.
     - Using the token ensures the ID belongs to the **currently logged-in user**.
 - This approach makes sure that the hotel is created **securely** under the correct user account.
+#### 6 Save the new hotel in the database
+- Save the hotel object to the hotels collection in the database.
+- Ensure that only **logged-in users** can access the `api/my-hotels` endpoint.
+```ts
+const hotel = new Hotel(newHotel);
+await hotel.save();
+```
+#### 7  Add `verifyToken` middleware to the endpoint
+- Add the `verifyToken` middleware **right after the endpoint path** in the router.
+- Make sure the **request form data** includes all the required fields for creating a new hotel, as validated by **express-validator**, and this validation should run **after the verifyToken middleware**.
+#### 8  Add `my-hotels` endpoint
+- Add `my-hotels` endpoint in the `index.ts` file.
+**backend/src/index.ts**
+```ts
+import myHotelRoutes from './routes/my-hotels';
+app.use("/api/my-hotels", myHotelRoutes);
+```
+#### **🔄 Flow** 
+- User sends a `POST` request to `/api/my-hotels` with hotel details and image files.
+- `verifyToken` middleware checks if the user is authenticated.
+- `express-validator` validates all required hotel fields from the request body.
+- `multer` processes the uploaded image files and stores them temporarily in memory.
+- The server checks for validation errors using `validationResult(req)`.
+- Extract image files from `req.files` and hotel details from `req.body`.
+- Convert each image buffer to Base64 and upload it to Cloudinary.
+- Wait for all uploads to complete using `Promise.all()` and collect image URLs.
+- Add `imageUrls`, `lastUpdated`, and `userId` to the `newHotel` object.
+- Create a new `Hotel` instance and save it to the database with `await hotel.save()`.
+- Respond to the client with status `201` and the saved hotel data.
+- If any error occurs, catch it and return a `500` status with an error message.
 
  **backend/routes/my-hotels.ts**
  ```ts
-import express, {Request,Response} from "express";
+import express, { Request, Response } from "express";
 import multer from "multer";
-import cloudinary from "cloudinary"
-import {HotelType} from "../models/hotel";
-const router=express.Router();
+import cloudinary from "cloudinary";
+import { HotelType } from "../models/hotel";
+import Hotel from "../models/hotel";
+import verifyToken from "../middleware/auth";
+import { body, validationResult } from "express-validator";
+
+const router = express.Router();
 
 // Store uploaded files in memory (not on disk)
 const storage = multer.memoryStorage();
@@ -272,64 +306,309 @@ const upload = multer({
   },
 });
 
-
 // api/my-hotels
 router.post(
-    "/",
-    upload.array("imageFiles",6),
-    async (req:Request,res:Response)=>{
-        try{
-            //Extract image files from multer
-            const imageFiles=req.files as Express.Multer.File[];
+  "/",
+  verifyToken,
+  [
+    body("name").notEmpty().withMessage("Name is required"),
+    body("city").notEmpty().withMessage("City is required"),
+    body("country").notEmpty().withMessage("Country is required"),
+    body("description").notEmpty().withMessage("Description is required"),
+    body("type").notEmpty().withMessage("Hotel type is required"),
+    body("facilities")
+      .isArray({ min: 1 })
+      .withMessage("Facilities must be a non-empty array"),
+    body("pricePerNight")
+      .notEmpty()
+      .withMessage("Price per night is required")
+      .isNumeric()
+      .withMessage("Price per night must be a number"),
+  ],
+  upload.array("imageFiles", 6),
+  async (req: Request, res: Response) => {
+    try {
+      // Validate request
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-            //Get other hotel details from the request body
-            const newHotel:HotelType=req.body;
+      // Extract image files from multer
+      const imageFiles = req.files as Express.Multer.File[];
 
-            //Upload the images to Cloudinary.
-            const uploadPromises=imageFiles.map(async(image)=>{
-            
-            // Convert image  buffer to Base64 string 
-            const b64=Buffer.from(image.buffer).toString("base64"); 
+      // Get other hotel details from the request body
+      const newHotel: HotelType = req.body;
 
-			// Construct Data URI (MIME type + Base64 data)
-            let dataURI="data:"+image.mimetype+";base64,"+b64;  
-			
-			// Upload to Cloudinary and get the response
-            const res=await cloudinary.v2.uploader.upload(dataURI);
-            
-            return res.url;  // Return the secure URL of the uploaded image
-     })
+      // 1. Upload the images to Cloudinary.
+      const uploadPromises = imageFiles.map(async (image) => {
+      const b64 = Buffer.from(image.buffer).toString("base64"); // Convert image buffer to Base64 string
+      const dataURI = "data:" + image.mimetype + ";base64," + b64; // Construct Data URI (MIME type + Base64 data)
+      const result = await cloudinary.v2.uploader.upload(dataURI); // Upload to Cloudinary and get the response
+       return result.url; // Return the secure URL of the uploaded image
+     });
 
+      // 2. If the upload is successful, add the URLs to the new hotel object.
+      const imageUrls = await Promise.all(uploadPromises);
+      newHotel.imageUrls = imageUrls;
+      newHotel.lastUpdated = new Date();
+      newHotel.userId = req.userId;
 
-      // Wait for all image uploads to finish
-	  const imageUrls=await Promise.all(uploadPromises);
-       newHotel.imageUrls=imageUrls;
-       newHotel.lastUpdated=new Date();
-       newHotel.userId=req.userId;
+      // 3. Save the new hotel in the database.
+      const hotel = new Hotel(newHotel);
+      await hotel.save();
 
-            // 2. If the upload is successful, add the URLs to the new hotel object.
-
-  
-
-            // 3. Save the new hotel in the database.
-
-  
-
-            // 4. Return a 201 status response.
-
-  
-  
-
-        }catch(e){
-          console.log("Error creating hotel:",e);
-          res.status(500).json({message:"Something went wrong"})
-        }
+      // 4. Return a 201 status response.
+      res.status(201).send(hotel);
+    } catch (e: any) {
+      console.error("Error creating hotel:", e.message || e);
+      res.status(500).json({ message: "Something went wrong" });
     }
-)
-
+  }
+);
 export default router;
  ```
+## 12.4 Create Hotel Form
+`05:28:00`
+### 1. Create `AddHotel` Component
+- Create `AddHotel.tsx` in `frontend/src/pages`
+- Create the `AddHotel` component and return the `<ManageHotelForm />`.
+- **Reasons for using `<ManageHotelForm />` component:**
+	- Makes the form **reusable**, so the same form can be used later for the **Edit Hotel** page.
+	- Keeps the **logic and UI** for creating and editing a hotel in **one central component**, reducing code duplication.
+```ts
+const AddHotel=()=>{
+    return(<ManageHotelForm/>)
+}
+export default AddHotel;
+```
 
+### 2. Add `AddHotel` Route
+- Open **`frontend/src/App.tsx`**
+- Add logic to render **logged-in routes** (like `/add-hotel`) only when the user is authenticated.
+**frontend/src/App.tsx**
+```ts
+import { useAppContext } from "./contexts/AppContext"
+const {isLoggedIn}=useAppContext();
+{
+  isLoggedIn && (
+    <>
+      <Route path="/add-hotel" element={<Layout><AddHotel/></Layout>}/>
+    </>
+  )
+}
+```
+
+### 3. Build `<ManageHotelForm/>` Component
+- Create a `forms` folder inside `frontend/src`.
+- Inside the `forms` folder, create a `ManageHotelForm` folder.
+- Create the `ManageHotelForm.tsx` file inside the `ManageHotelForm` folder.
+- The form is quite large and has many different parts and sections. Adding everything into a single component would make it difficult to keep track of everything and hard to navigate.
+- Break the form into smaller components, with **one component per section**.
+- Sections → Hotel Details, Types, Facilities, Guests, Images.
+- This approach will help organize the form into identifiable components, making it easier to maintain and update in the future.
+- Set up the form framework we have been using so far: **React Hook Form**.
+- Create a type for the form properties.
+- It’s similar to the backend hotel type but uses **FileList** for images instead of a string array. Hence, we can’t reuse the backend type.
+- Import the `useForm` hook from the React Hook Form package.
+- Instead of destructuring (`register`, `watch`, `handleSubmit`, `formState: { errors }`) from `useForm()`, assign everything to a single variable.
+- This is because the form is split into smaller components, and we need to use **FormProvider** so that child components can access all React Hook Form methods.
+- Wrap the entire form inside the **FormProvider**.
+
+**frontend/src/forms/ManageHotelForm/`ManageHotelForm.tsx`**
+```ts
+import {FormProvider, useForm} from "react-hook-form"
+export type HotelFormData={
+    name:string;
+    city:string;
+    country:string;
+    description:string;
+    type:string;
+    pricePerNight:number;
+    startRating:number;
+    facilities:string[];
+    imageFiles:FileList;
+    adultCount:number;
+    chldCount:number;
+}
+
+const ManageHotelForm=()=>{
+    const formMethods=useForm<HotelFormData>();
+    return(<FormProvider {...formMethods}>
+            <form>
+              <DetailsSection/>
+            </form>
+        </FormProvider>
+    )
+}
+export default ManageHotelForm;
+```
+
+##### 💡 Difference between `useForm` and `useFormContext`
+1. **`useForm()`** → Initializes the form and provides all React Hook Form methods (like `register`, `handleSubmit`, `watch`, etc.).
+	- Used **only once**, usually in the **main form component** (`ManageHotelForm`).
+2. **`useFormContext()`** → Allows **child components** to access the form methods from the context provided by `FormProvider`. 
+	- Used in **nested components** (like `HotelDetailsSection`).
+Notes:
+- **`register`** → Connects input fields to React Hook Form for tracking and validation.
+- **`watch`** → Watches and returns the current value(s) of specified form fields.
+- **`handleSubmit`** → Handles form submission and runs validation before calling your submit function.
+- **`formState: { errors }`** → Contains validation error messages for each field.
+#### 1. Building HotelDetailsSection Component
+- Create `DetailsSection.tsx` inside **frontend/src/forms/ManageHotelForm**.
+- Create a `HotelDetailsSection` component.
+- Import `useFormContext()` from `"react-hook-form"`.
+- The form context that was created using `useForm()` inside `ManageHotelForm` can be accessed in any child component (like `HotelDetailsSection`) through `useFormContext()`
+ **frontend/src/forms/ManageHotelForm/DetailsSection.tsx
+ ```ts
+import { useFormContext } from "react-hook-form";
+import type { HotelFormData } from "./ManageHotelForm";
+
+const HotelDetailsSection = () => {
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext<HotelFormData>();
+
+  return (
+    <div className="flex flex-col gap-4"> {/* Fixed typo: felx → flex */}
+      <h1 className="text-3xl font-bold mb-3">Add Hotel</h1>
+
+      {/* Hotel Name */}
+      <div>
+        <label className="text-gray-700 text-sm font-bold flex-1">
+          Name
+          <input
+            type="text"
+            className="border rounded w-full py-1 px-2 font-normal"
+            {...register("name", { required: "This field is required" })}
+          />
+          {errors.name && (
+            <span className="text-red-500">{errors.name.message}</span>
+          )}
+        </label>
+      </div>
+
+      {/* City and Country */}
+      <div className="flex flex-col md:flex-row gap-5">
+        <label className="text-gray-700 text-sm font-bold flex-1">
+          City
+          <input
+            type="text"
+            className="border rounded w-full py-1 px-2 font-normal" // Fixed typo: font-nomal → font-normal
+            {...register("city", { required: "This field is required" })}
+          />
+          {errors.city && (
+            <span className="text-red-500">{errors.city.message}</span>
+          )}
+        </label>
+
+        <label className="text-gray-700 text-sm font-bold flex-1">
+          Country
+          <input
+            type="text"
+            className="border rounded w-full py-1 px-2 font-normal"
+            {...register("country", { required: "This field is required" })}
+          />
+          {errors.country && (
+            <span className="text-red-500">{errors.country.message}</span>
+          )}
+        </label>
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className="text-gray-700 text-sm font-bold flex-1">
+          Description
+          <textarea
+            rows={5}
+            className="border rounded w-full p-2 resize-none"
+            {...register("description", { required: "This field is required" })}
+          ></textarea>
+          {errors.description && (
+            <span className="text-red-500">{errors.description.message}</span>
+          )}
+        </label>
+
+        {/* Price Per Night */}
+        <label className="block text-gray-700 text-sm font-bold mb-1">
+          Price Per Night
+          <input
+            type="number"
+            min={1}
+            className="border rounded w-[50%] my-1 py-1 px-2 font-normal block"
+            {...register("pricePerNight", { required: "This field is required" })}
+          />
+          {errors.pricePerNight && (
+            <span className="text-red-500">{errors.pricePerNight.message}</span>
+          )}
+        </label>
+
+        {/* Star Rating */}
+        <label className="block text-gray-700 text-sm font-bold mb-1">
+          Star Rating
+          <select
+            className="border rounded w-[50%] my-1 py-1 px-2 font-normal block"
+            {...register("starRating", { required: "This field is required" })} // Fixed typo: startRating → starRating
+          >
+            <option value="" className="text-sm font-bold">
+              Select a Rating
+            </option>
+            {[1, 2, 3, 4, 5].map((num) => (
+              <option key={num} value={num}>
+                {num}
+              </option>
+            ))}
+          </select>
+          {errors.starRating && (
+            <span className="text-red-500">{errors.starRating.message}</span>
+          )}
+        </label>
+      </div>
+    </div>
+  );
+};
+export default HotelDetailsSection;
+ ```
+
+![](Images/Pasted%20image%2020251006215333.png)
+#### 2. Building the Hotel Type Section Component
+##### 2.1 Creating a Config File for Hotel Types
+- Hotel **types** are represented as selectable chips in the form.
+- These types are provided by hotel booking websites.
+- A user who signs up only needs to select a type when creating a hotel.
+- For such static options, it’s best to store them in a **configuration file**.
+- Create a file named `hotel-options-config.ts` inside `frontend/src/config`.
+- To **edit hotel types**, simply update the `hotel-options-config.ts` file.
+**frontend/src/config/hotel-options-config.ts**`
+```ts
+export const hotelTypes=[
+  "Budget",
+  "Boutique",
+  "Luxury",
+  "Ski Resort",
+  "Business",
+  "Family",
+  "Romantic",
+  "Hiking Resort",
+  "Cabin",
+  "Beach Resort",
+  "Golf Resort",
+  "Motel",
+  "All Inclusive",
+  "Pet Friendly",
+  "Self Catering",
+]
+```
+##### 2.2 Building the Hotel Type Section Component
+- Create `TypeSection.tsx` file in **frontend/src/forms/ManageHotelForm folder.
+- Add styles to hide radio button and add own styles to indicate that an option has been selected: `className="hidden"`
+- style the labels.
+- get hold of selected type value.
+- de-structure the watch function from the useFormContext( );
+- get the type that users selected which we get from the type property. 
+- when type form filed changes we get the new value in this `typeWatch` variable.
+- 
 # Quick Revision
 ### 1. Manage Hotel Form
 - Add **Manage Hotel** form.
