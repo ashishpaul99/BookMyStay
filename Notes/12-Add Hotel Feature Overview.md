@@ -601,14 +601,80 @@ export const hotelTypes=[
 ]
 ```
 ##### 2.2 Building the Hotel Type Section Component
-- Create `TypeSection.tsx` file in **frontend/src/forms/ManageHotelForm folder.
-- Add styles to hide radio button and add own styles to indicate that an option has been selected: `className="hidden"`
-- style the labels.
-- get hold of selected type value.
-- de-structure the watch function from the useFormContext( );
-- get the type that users selected which we get from the type property. 
-- when type form filed changes we get the new value in this `typeWatch` variable.
-- 
+- Create a `TypeSection.tsx` file in **frontend/src/forms/ManageHotelForm** folder.
+- Hide the radio buttons using `className="hidden"` and style the labels to indicate when an option is selected.
+- Style the labels (chips) for better UX.
+- Use `useFormContext()` to access form methods.
+- De-structure the `watch` function from `useFormContext()`.
+- Use `watch("type")` to get the currently selected type.
+- Store the selected type value in a variable (e.g., `typeWatch`).
+- When the type form field changes, `typeWatch` will automatically update with the new value.
+
+**Flow of `TypeSection` Component**
+- Import `useFormContext`, `hotelTypes`, and `HotelFormData`.
+- Access form methods using `useFormContext`: `register`, `watch`, `errors`.
+- Use `watch("type")` to track the currently selected type.
+- Render a heading: **Type**.
+- Map over `hotelTypes` to render radio button chips.
+	- Apply conditional styling if the chip is selected.
+	- Bind each input to `register("type", { required })`.
+	- Hide the actual radio input (`className="hidden"`) and display styled span.
+- Add `key` prop to each chip for React list rendering.
+- Display error message if no type is selected using `errors.type`.
+- Export the component as `TypeSection`.
+
+```ts
+import { useFormContext } from "react-hook-form";
+import { hotelTypes } from "../../config/hotel-options-config";
+import type { HotelFormData } from "../ManageHotelForm/ManageHotelForm";
+
+const TypeSection = () => {
+  const {
+    register,
+    watch,
+    formState: { errors },
+  } = useFormContext<HotelFormData>();
+
+  const typeWatch = watch("type"); // Watch selected type for styling
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold mb-2">Type</h2>
+
+      <div className="grid grid-cols-5 gap-2">
+        {hotelTypes.map((type) => (
+          <label
+            key={type} // Added key for React list
+            className={
+              typeWatch === type
+                ? "cursor-pointer bg-blue-300 text-sm rounded-full px-4 py-2 font-semibold"
+                : "cursor-pointer bg-gray-300 text-sm rounded-full px-4 py-2 font-semibold"
+            }
+          >
+            <input
+              type="radio"
+              value={type}
+              {...register("type", { required: "This field is required" })}
+              className="hidden"
+            />
+            <span>{type}</span>
+          </label>
+        ))}
+      </div>
+
+      {/* Display error message if type is not selected */}
+      {errors.type && (
+        <span className="text-red-500 text-sm font-bold">
+          {errors.type.message}
+        </span>
+      )}
+    </div>
+  );
+};
+
+export default TypeSection;
+```
+![](Images/Pasted%20image%2020251006225511.png)
 # Quick Revision
 ### 1. Manage Hotel Form
 - Add **Manage Hotel** form.
