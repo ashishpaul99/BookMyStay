@@ -45,5 +45,4 @@ const TypeSection = () => {
     </div>
   );
 };
-
 export default TypeSection;
