@@ -786,6 +786,12 @@ const GuestSection = () => {
 export default GuestSection;
 ```
 
+![](Images/Pasted%20image%2020251007152212.png)
+#### 3. Building the Image Section Component
+- Create `ImagesSection.tsx` file in **frontend/src/ManageHotelFrom** folder.
+```ts
+
+```
 
 # Quick Revision
 ### 1. Manage Hotel Form
