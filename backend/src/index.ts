@@ -8,14 +8,14 @@ import cookieParser from "cookie-parser"
 import path from "path"
 const port=7000;
 import { v2 as cloudinary } from 'cloudinary';
-import myHotelRoutes from './routes/my-hotels';
+import myHotelRoutes from "./routes/my-hotels";
 
 // Initialize Cloudinary connection with credentials from environment variables
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+    cloud_name:process.env.CLOUDINARY_CLOUD_NAME,
+    api_key:process.env.CLOUDINARY_API_KEY,
+    api_secret:process.env.CLOUDINARY_API_SECRET
+})
 
 mongoose
   .connect(process.env.MONGODB_CONNECTION_STRING as string)
@@ -36,7 +36,8 @@ app.use(cors({
 app.use(express.static(path.join(__dirname,"../../frontend/dist")))
 app.use("/api/auth",authRoute)
 app.use("/api/users",userRoute);
-app.use("/api/my-hotels", myHotelRoutes);
+app.use("/api/my-hotels",myHotelRoutes)
+
 
 app.listen(port,()=>{
    console.log(`http://localhost:7000/`)

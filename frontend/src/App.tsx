@@ -9,8 +9,6 @@ import { useAppContext } from "./contexts/AppContext";
 function App() {
 
   const {isLoggedIn}=useAppContext();
-
-  
   return (
     <Router>
         <Routes>
@@ -18,11 +16,12 @@ function App() {
             <Route path="/search" element={<Layout><p>Search Page</p></Layout>} />
             <Route path="/signin" element={<Layout><SignIn/></Layout>} />
             <Route path="/register" element={<Layout><Register/></Layout>}></Route>
-            {
-              isLoggedIn &&<>
-               <Route path="/add-hotel" element={<Layout><AddHotel/></Layout>}></Route>
-              </>
-            }
+            {isLoggedIn && <>
+              <Route path="/add-hotel" element={<Layout>
+                <AddHotel/>
+              </Layout>}/>
+            </>
+            }         
             <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

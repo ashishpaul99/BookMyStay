@@ -79,6 +79,7 @@ cloudinary.config({
 ```
 
 ## 12.3 Create Hotel API
+`04:56:00`
 - Create a backend API route on the Node.js server that allows users to **create a hotel**.
 - In the `routes` folder, create a new file named **`my-hotels.ts`**.
 - This file will contain a set of API endpoints that let users **create, update, and view** their own hotels.
@@ -139,22 +140,33 @@ const upload = multer({
 ```
 #### 3. Upload the images to Cloudinary.
 1. **Encoding Images**
-	- Each uploaded image is first **converted to a Base64 string**.
-	- We use `Buffer.from(image.buffer).toString("base64")` to achieve this.
+	- Each image file has a `buffer` (binary data).
+	- `Buffer.from(...).toString("base64")` converts that binary image data into a **Base64-encoded string**.
 	- This conversion allows Cloudinary to process the image data.
+```ts
+const b64 = Buffer.from(image.buffer).toString("base64");
+```
 2. **Creating Data URI**
 	- The Base64 string alone isn’t enough — Cloudinary also needs to know the **MIME type** (like `image/png` or `image/jpeg`).
 	- We combine both into a **Data URI** format: `data:<mimetype>;base64,<base64string>
 	- This Data URI contains all image information needed for upload.
+```ts
+const dataURI = "data:" + image.mimetype + ";base64," + b64;
+```
+
 3. **Uploading to Cloudinary**
 	- Each image is uploaded using Cloudinary’s SDK: `cloudinary.v2.uploader.upload(dataURI)
 	- The response includes details like image URL, public ID, format, etc.
 	- We extract and use the **`secure_url`**, which is the hosted image link.
-4. **Handling Multiple Images**
+```ts
+const result = await cloudinary.v2.uploader.upload(dataURI);
+```
+
+3. **Handling Multiple Images**
 	- Since uploads are **asynchronous**, we create an **array of promises** using `.map()`
 	- This allows multiple uploads to happen **in parallel**.
 	- Using `Promise.all()`, we wait until **all uploads complete** before moving forward.
-5. **Storing Uploaded URLs**
+4. **Storing Uploaded URLs**
 	- Once uploads are done, we get an **array of URLs** (`imageUrls`).
 	- These URLs can then be saved in the database along with the hotel data.
  **backend/routes/my-hotels**
@@ -178,11 +190,11 @@ const uploadPromises = imageFiles.map(async (image) => {
 const imageUrls = await Promise.all(uploadPromises);
 
 ```
-
 #### 4. If the upload is successful, add the URLs to the new hotel object
 - Add an **error handler** in the `catch` block.
 - Before saving the hotel to the database, a **hotel model** should be created.
 ##### 4.1 Creating hotel database
+`05:12:41`
 - Create a new file named **`hotel.ts`** inside `backend/src/models`.
 - Define a **TypeScript type** — this helps with **IntelliSense** and type safety when creating new hotels.
 - Once the **hotel schema** is defined, you can start **saving hotels to the database**.
@@ -211,7 +223,7 @@ export type HotelType = {
 // Hotel schema
 const hotelSchema = new mongoose.Schema<HotelType>({
   userId: { type: String, required: true },
-  name: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
   city: { type: String, required: true },
   country: { type: String, required: true },
   description: { type: String, required: true }, // fixed spelling
@@ -737,7 +749,7 @@ export default FacilitiesSection
 
 ![](Images/Pasted%20image%2020251007143121.png)
 
-#### 3. Building the Guests Section Component
+#### 4. Building the Guests Section Component
 - Create `GuestsSection.tsx` file in frontend/src/ManageHotelFrom folder.
 ```ts
 import { useFormContext } from "react-hook-form";
@@ -787,12 +799,336 @@ export default GuestSection;
 ```
 
 ![](Images/Pasted%20image%2020251007152212.png)
-#### 3. Building the Image Section Component
+#### 5. Building the Image Section Component
 - Create `ImagesSection.tsx` file in **frontend/src/ManageHotelFrom** folder.
+- Multiple property lets user to select multiple files.
+
+**frontend/src/forms/ManageHotelForm/ImagesSection.tsx
 ```ts
+import { useFormContext } from "react-hook-form";
+import type { HotelFormData } from "./ManageHotelForm";
+
+const ImagesSection = () => {
+  // Access form context to register fields and handle validation errors
+  const { register, formState: { errors } } = useFormContext<HotelFormData>();
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold mb-3">Images</h2>
+
+      <div className="border rounded p-4 flex flex-col gap-4">
+        <input
+          type="file"
+          multiple // lets user upload multiple images
+          accept="image/*" // input only accepts image files
+          className="file:mr-4 file:py-2 file:px-4 file:rounded-md 
+                     file:border-0 file:text-sm file:font-semibold 
+                     file:bg-blue-600 file:text-white hover:file:bg-blue-700 
+                     w-full text-gray-700 font-normal"
+          {...register("imageFiles", {
+            validate: (imageFiles) => {
+              const totalLength = imageFiles.length;
+
+              if (totalLength === 0) {
+                return "At least one image should be added";
+              }
+
+              if (totalLength > 6) {
+                return "Total number of images cannot be more than 6";
+              }
+
+              return true;
+            },
+          })}
+        />
+      </div>
+
+      {/* Show validation error message if any */}
+      {errors.imageFiles && (
+        <span className="text-red-500 text-sm font-bold">
+          {errors.imageFiles.message as string}
+        </span>
+      )}
+    </div>
+  );
+};
+
+export default ImagesSection;
+```
+
+![](Images/Pasted%20image%2020251011102926.png)
+#### 6. Connecting the form to frontend
+- Connecting the form to frontend.
+##### 6.1 Saving form Data
+**🖼️ Connecting Image File Uploads to the Backend**
+- `Array.from()` converts the `FileList` into an actual array of image files.
+- The `FileList` type doesn’t support array methods like `forEach` or `map` directly.
+- By converting it to an array, we can easily loop through each image file and append it to `FormData`.
+- Since we’re working with image files (binary data), we don’t need to explicitly define them as `imageFiles[]`.
+- The **Multer** package on the backend automatically handles this process.
+- It accepts multiple uploaded image files, processes them, and attaches them to the `request` object.
+- This corresponds to the field name `"imageFiles"` that we registered in our backend endpoint.
+**frontend/src/forms/ManageHotelForm/ManageHotelForm.tsx
+- ```ts
+  Array.from(formDataJson.imageFiles).forEach((imageFile)=>{
+  formData.append(`imageFiles`,imageFile)
+   })
+  ```
+
+**frontend/src/forms/ManageHotelForm/ManageHotelForm.tsx
+```ts
+import { FormProvider, useForm } from "react-hook-form";
+import DetailsSection from "./DetailsSection";
+import TypeSection from "./TypeSection";
+import FacilitiesSection from "./FacilitiesSection";
+import GuestsSection from "./GuestsSection";
+import ImagesSection from "./ImagesSection";
+
+export type HotelFormData = {
+  name: string;
+  city: string;
+  country: string;
+  description: string;
+  type: string;
+  pricePerNight: number;
+  starRating: number;
+  facilities: string[];
+  imageFiles: FileList;
+  adultCount: number;
+  childCount: number; 
+};
+
+const ManageHotelForm = () => {
+  const formMethods = useForm<HotelFormData>();
+  const { handleSubmit } = formMethods;
+
+  // Submit the form
+  const onSubmit = handleSubmit((formDataJson: HotelFormData) => {
+    // Convert JSON form data into FormData object
+    // FormData only accepts strings or Blob/File objects
+
+    const formData = new FormData();
+    formData.append("name", formDataJson.name);
+    formData.append("city", formDataJson.city);
+    formData.append("country", formDataJson.country);
+    formData.append("description", formDataJson.description);
+    formData.append("pricePerNight", formDataJson.pricePerNight.toString());
+    formData.append("starRating", formDataJson.starRating.toString());
+    formData.append("type", formDataJson.type);
+    formData.append("adultCount", formDataJson.adultCount.toString());
+    formData.append("childCount", formDataJson.childCount.toString());
+
+    // Append facilities array
+    formDataJson.facilities.forEach((facility, index) => {
+      formData.append(`facilities[${index}]`, facility);
+    });
+
+    // Convert FileList to array to use forEach; 
+    // Multer on the backend handles the files and attaches them to the request
+    Array.from(formDataJson.imageFiles).forEach((imageFile) => {
+      formData.append("imageFiles", imageFile);
+    });
+
+    // TODO: send formData to backend API using fetch/axios
+  });
+
+  return (
+    <FormProvider {...formMethods}>
+      <form className="flex flex-col gap-5" onSubmit={onSubmit}>
+        <DetailsSection />
+        <TypeSection />
+        <FacilitiesSection />
+        <GuestsSection />
+        <ImagesSection />
+        <span className="flex justify-end">
+          <button
+            type="submit"
+            className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500 text-xl"
+          >
+            Save
+          </button>
+        </span>
+      </form>
+    </FormProvider>
+  );
+};
+
+export default ManageHotelForm;
 
 ```
 
+##### 6.2 Sending a POST request to the `my-hotels` backend endpoint
+- Form data is sent to the backend endpoint using a POST request.
+###### 1. Add Hotel Page
+**frontend/src/pages/AddHotel.tsx
+```ts
+import { useMutation } from "@tanstack/react-query";
+import ManageHotelForm from "../forms/ManageHotelForm/ManageHotelForm";
+import * as apiClient from "../api-client";
+import { useAppContext } from "../contexts/AppContext";
+
+const AddHotel = () => {
+  const { showToast } = useAppContext();
+
+  // Use react-query's useMutation to handle adding a hotel
+  const mutation = useMutation({
+    mutationFn: apiClient.addMyHotel,
+    onSuccess: () => {
+      showToast({ message: "Hotel Saved!", type: "SUCCESS" });
+    },
+    onError: () => {
+      showToast({ message: "Error Saving Hotel", type: "ERROR" });
+    },
+  });
+
+  // Handle saving the hotel form by calling mutate
+  const handleSave = (hotelFormData: FormData) => {
+    mutation.mutate(hotelFormData);
+  };
+
+  // Pass isPending from mutation as isLoading to the form
+  // This disables the save button while the request is in progress
+  return (
+    <ManageHotelForm
+      onSave={handleSave}
+      isLoading={mutation.isPending}
+    />
+  );
+};
+
+export default AddHotel;
+```
+
+###### 2. Adding the `my-hotels` route to the API client in the frontend.
+
+**frontend/src/api-client.ts
+```ts
+/**
+ * Sends a POST request to add a new hotel using FormData.
+ * @param hotelFormData - FormData object containing hotel details and image files
+ * @returns The added hotel data as JSON
+ * @throws Error if the request fails
+ */
+export const addMyHotel = async (hotelFormData: FormData) => {
+  // Send POST request to the backend API
+  const response = await fetch(`${API_BASE_URL}/api/my-hotels`, {
+    method: "POST",
+    credentials: "include", // send cookies with the request if any
+    body: hotelFormData,    // FormData handles text fields and file uploads
+  });
+
+  // Check if the response is not successful
+  if (!response.ok) {
+    throw new Error("Failed to add hotel");
+  }
+
+  // Parse and return JSON response (contains the added hotel)
+  return response.json();
+};
+```
+
+
+###### 3.  ManageHotelForm
+- Tell our component what props it should expect in `ManageHotelForm.tsx`
+```ts
+// Tell our component what props it should expect
+type Props = {
+  onSave: (hotelFormData: FormData) => void;
+  isLoading: boolean;
+};
+```
+
+**Adding the `disabled` Property to the Save Button**
+- `disabled={isLoading}` – if `isLoading` is `true`, the button will be disabled, preventing the user from submitting the form again while the previous request is still in progress.
+- This avoids accidental duplicate submissions and reduces unnecessary requests to the server.
+**frontend/src/forms/ManageHotelForm/ManageHotelForm.tsx
+```ts
+import { FormProvider, useForm } from "react-hook-form";
+import DetailsSection from "./DetailsSection";
+import TypeSection from "./TypeSection";
+import FacilitiesSection from "./FacilitiesSection";
+import GuestsSection from "./GuestsSection";
+import ImagesSection from "./ImagesSection";
+
+// Define the structure of the form data
+export type HotelFormData = {
+  name: string;
+  city: string;
+  country: string;
+  description: string;
+  type: string;
+  pricePerNight: number;
+  starRating: number;
+  facilities: string[];
+  imageFiles: FileList;
+  adultCount: number;
+  childCount: number; 
+};
+
+// Props for the component
+type Props = {
+  onSave: (hotelFormData: FormData) => void;
+  isLoading: boolean;
+};
+
+const ManageHotelForm = ({ onSave, isLoading }: Props) => {
+  const formMethods = useForm<HotelFormData>();
+  const { handleSubmit } = formMethods;
+
+  // Handle form submission
+  const onSubmit = handleSubmit((formDataJson: HotelFormData) => {
+    // Convert JSON form data into FormData object
+    // FormData only accepts strings or Blob/File objects
+    const formData = new FormData();
+    formData.append("name", formDataJson.name);
+    formData.append("city", formDataJson.city);
+    formData.append("country", formDataJson.country);
+    formData.append("description", formDataJson.description);
+    formData.append("pricePerNight", formDataJson.pricePerNight.toString());
+    formData.append("starRating", formDataJson.starRating.toString());
+    formData.append("type", formDataJson.type);
+    formData.append("adultCount", formDataJson.adultCount.toString());
+    formData.append("childCount", formDataJson.childCount.toString());
+
+    // Append facilities array
+    formDataJson.facilities.forEach((facility, index) => {
+      formData.append(`facilities[${index}]`, facility);
+    });
+
+    // Convert FileList to array to use forEach
+    // Multer on the backend handles the files and attaches them to the request
+    Array.from(formDataJson.imageFiles).forEach((imageFile) => {
+      formData.append("imageFiles", imageFile);
+    });
+
+    // Call the onSave callback to send data to the backend
+    onSave(formData);
+  });
+
+  return (
+    <FormProvider {...formMethods}>
+      <form className="flex flex-col gap-5" onSubmit={onSubmit}>
+        <DetailsSection />
+        <TypeSection />
+        <FacilitiesSection />
+        <GuestsSection />
+        <ImagesSection />
+
+        <span className="flex justify-end">
+          <button
+            type="submit"
+            disabled={isLoading} // disable while saving
+            className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500 text-xl disabled:bg-gray-500"
+          >
+            {isLoading ? "Saving..." : "Save"}
+          </button>
+        </span>
+      </form>
+    </FormProvider>
+  );
+};
+export default ManageHotelForm;
+```
 # Quick Revision
 ### 1. Manage Hotel Form
 - Add **Manage Hotel** form.

@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "8097a63ddcd8ba61",
+        "id": "0a3b329cb085b75d",
         "type": "tabs",
         "children": [
           {
-            "id": "10d5207d79c14ffe",
+            "id": "d92af11b2f8a594a",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -171,11 +171,14 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "10d5207d79c14ffe",
+  "active": "d92af11b2f8a594a",
   "lastOpenFiles": [
+    "const leastAgeUser.md",
+    "12-Add Hotel Feature Overview.md",
+    "Interview Prep.md",
+    "Images/Pasted image 20251011102926.png",
     "Build a Hotel Booking App.md",
     "2025-10-07.md",
-    "12-Add Hotel Feature Overview.md",
     "Images/Pasted image 20251007152212.png",
     "Images/Pasted image 20251007143121.png",
     "App Context.md",
@@ -187,7 +190,6 @@
     "Images/Pasted image 20251004144558.png",
     "Images/Pasted image 20251004144551.png",
     "Images/Pasted image 20251004142141.png",
-    "Images/Pasted image 20251004142138.png",
     "11–Deployments Explained & Auth Deployment.md",
     "09-Automated Tests Explained.md",
     "10-Authentication Testing.md",

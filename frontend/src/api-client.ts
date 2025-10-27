@@ -76,3 +76,28 @@ export const signOut=async()=>{
        throw new Error("Error during sign out")
     }
 }
+
+/**
+ * Sends a POST request to add a new hotel using FormData.
+ * @param hotelFormData - FormData object containing hotel details and image files
+ * @returns The added hotel data as JSON
+ * @throws Error if the request fails
+ */
+export const addMyHotel = async (hotelFormData: FormData) => {
+  // Send POST request to the backend API
+  const response = await fetch(`${API_BASE_URL}/api/my-hotels`, {
+    method: "POST",
+    credentials: "include", // send cookies with the request if any
+    body: hotelFormData,    // FormData handles text fields and file uploads
+  });
+
+  // Check if the response is not successful
+  if (!response.ok) {
+    throw new Error("Failed to add hotel");
+  }
+
+  // Parse and return JSON response (contains the added hotel)
+  return response.json();
+};
+
+
