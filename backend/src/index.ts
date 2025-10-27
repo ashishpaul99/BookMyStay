@@ -34,11 +34,11 @@ app.use(cors({
 }));
 
 app.use(express.static(path.join(__dirname,"../../frontend/dist")))
-app.use("/api/auth",authRoute)
+app.use("/api/auth",authRoute);
 app.use("/api/users",userRoute);
 app.use("/api/my-hotels",myHotelRoutes)
 
-app.get("*",(req:Request,res:Response)=>{
+app.get("/*",(req:Request,res:Response)=>{
    res.sendFile(path.join(__dirname,"../../frontend/dist/index.html"));
 })
 
