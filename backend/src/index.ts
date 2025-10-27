@@ -38,6 +38,9 @@ app.use("/api/auth",authRoute)
 app.use("/api/users",userRoute);
 app.use("/api/my-hotels",myHotelRoutes)
 
+app.get("*",(req:Request,res:Response)=>{
+   res.sendFile(path.join(__dirname,"../../frontend/dist/index.html"));
+})
 
 app.listen(port,()=>{
    console.log(`http://localhost:7000/`)

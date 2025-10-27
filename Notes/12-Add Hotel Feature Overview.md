@@ -1140,3 +1140,87 @@ export default ManageHotelForm;
 - Cloudinary returns **image URLs**.
 - Backend merges image URLs + other hotel data.
 - Saves final hotel data to **MongoDB**.
+#### 7. Write test for Add Hotel functionality
+- Copy cloudinary variables from `.env` and paste it in `.env.e2e`
+- Write test for Sign In and after that write for add hotel feature.
+- Create a `files` folder in `test` folder and add image in it.
+##### 1. Installing **TypeScript** inside the `e2e-tests` folder
+- This creates a **separate TypeScript setup just for E2E tests**, without affecting the main backend/frontend apps.
+```bash
+npm init -y
+npm i typescript --save-dev
+npx tsc --init
+```
+
+- `e2e-tests/tests/manage-hotels.spec.ts`
+```ts
+import { test, expect } from "@playwright/test";
+import * as path from "path";
+
+const UI_URL = "http://localhost:5173/";
+
+test.beforeEach( async ({ page }) => {
+  await page.goto(UI_URL);
+  await page.getByRole("link", { name: "Sign In" }).click();
+  await expect(page.getByRole("heading", { name: "Sign In Page" })).toBeVisible();
+  await page.locator('[name="email"]').fill("codevwithpaul@gmail.com");
+  await page.locator('[name="password"]').fill("ashish");
+  await page.getByRole("button", { name: "Sign In" }).click();
+  await expect(page.getByText("Logged In Successfully!")).toBeVisible();
+});
+
+  
+
+test("should allow user to add a hotel", async ({ page }) => {
+
+  await page.goto(`${UI_URL}add-hotel`);
+
+  await page.locator('[name="name"]').fill("Test Hotel");
+  await page.locator('[name="city"]').fill("Test City");
+  await page.locator('[name="country"]').fill("Test Country");
+  await page
+    .locator('[name="description"]')
+    .fill("This is a description for the Test Hotel");
+    
+  await page.locator('[name="pricePerNight"]').fill("100");
+  
+  await page.selectOption('select[name="starRating"]', "3");
+
+  await page.getByText("Budget").click();
+  
+  await page.getByLabel("Free Wifi").check();
+  await page.getByLabel("Parking").check();
+
+  await page.locator('[name="adultCount"]').fill("2");
+  await page.locator('[name="childCount"]').fill("4");
+
+  await page.setInputFiles('[name="imageFiles"]', [
+    path.join(__dirname, "files", "1.jpeg"),
+    path.join(__dirname, "files", "2.jpeg"),
+
+  ]);
+
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Hotel Saved!")).toBeVisible();
+});
+```
+
+#### 8. Deploy Add Hotel Feature
+`7:09:00`
+- Whenever we deploy to our deployment environment, we bundle the frontend code together with the backend code. This allows everything to be served from the same server, making it easier to manage.
+- Navigate to **`backend/src/index.ts`**.
+- Ensure that all non-API requests are redirected to the `index.html` file located in the frontend `dist` folder.
+- This is achieved using a **catch-all route**, which forwards any request that does not match an API endpoint to React Router. React Router DOM will then handle the routing on the frontend.
+- **backend/src/index.ts**
+```ts
+app.use("/api/auth",authRoute)
+
+app.use("/api/users",userRoute);
+app.use("/api/my-hotels",myHotelRoutes)
+app.get("*",(req:Request,res:Response)=>{
+   res.sendFile(path.join(__dirname,"../../frontend/dist/index.html"));
+})
+```
+
+- Add cloudinary environment variables in project folder in render.
+- 
