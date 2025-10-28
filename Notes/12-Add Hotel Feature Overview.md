@@ -1223,4 +1223,4 @@ app.get("*",(req:Request,res:Response)=>{
 ```
 
 - Add cloudinary environment variables in project folder in render.
-- 
+- https://bookmystay-b9qd.onrender.com/

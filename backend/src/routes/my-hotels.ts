@@ -1,7 +1,7 @@
 import express,{Request,Response} from "express";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
-import type { HotelType } from "../models/hotel";
+import { HotelType } from "../shared/types";
 import Hotel from "../models/hotel"
 import verifyToken from "../middleware/auth";
 import { body } from "express-validator";
@@ -66,6 +66,16 @@ router.post("/", verifyToken,  upload.array("imageFiles",6),
         console.log("Error creating hotel",error);
         res.status(500).send({message:"Something went wrong",error});
     }
+})
+
+router.get("/",verifyToken,async (req:Request,res:Response)=>{
+    try{
+        const hotels=await Hotel.find({userId:req.userId});
+        res.json(hotels);
+
+    }catch(error){
+        res.status(500).json({message:"Error fetching hotels"});
+    }  
 })
 export default router;
 
