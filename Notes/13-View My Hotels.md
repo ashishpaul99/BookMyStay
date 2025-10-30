@@ -48,7 +48,7 @@ export const fetchMyHotels = async (): Promise<HotelType[]> => {
 ```
 
 ## 3. MyHotels Page in `Pages`
-- Create the `MyHotels` page inside the `pages` folder:  `frontend/src/pages/MyHotels.tsx`
+- Create the `MyHotels.tsx` page inside the `pages` folder:  `frontend/src/pages/MyHotels.tsx`
 - Add React Icons for displaying hotel details.
 - Navigate to the frontend folder and install the React Icons package: → `npm i react-icons`
 ```tsx
@@ -244,3 +244,9 @@ backend/
 ```
 
 ## 7. View My Hotel Deployment
+- Push to GitHub:
+- **Deploy on Render:**
+	- Open your project on Render.
+	- Click **“Deploy Latest Commit.”**
+- View Site:
+	- Open the live Render URL and check the **My Hotels** page.
