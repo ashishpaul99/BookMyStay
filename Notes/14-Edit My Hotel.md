@@ -531,4 +531,4 @@ test("should edit hotel", async ({ page }) => {
 ```
 
 ## 8. Edit My Hotel Deployment
-- 
+- Deployed edit my hotel feature to render.

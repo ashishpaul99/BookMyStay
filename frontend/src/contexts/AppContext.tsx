@@ -3,7 +3,6 @@ import Toast from "../components/Toast";
 import {useQuery} from "@tanstack/react-query";
 import * as apiClient from "../api-client";
 
-
 // Toast message type
 type ToastMessage = {
   message: string;

@@ -14,3 +14,13 @@ export type HotelType={
   imageUrls:string[];
   lastUpdated:Date;
 }
+
+// Defines the structure of the hotel search API response
+export type HotelSearchResponse = {
+  data: HotelType[];  // array of hotels returned from the search
+  pagination: {
+    total: number;    // total number of hotels in the database
+    page: number;     // current page number
+    pages: number;    // total number of pages
+  };
+};

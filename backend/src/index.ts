@@ -9,6 +9,7 @@ import path from "path"
 const port=7000;
 import { v2 as cloudinary } from 'cloudinary';
 import myHotelRoutes from "./routes/my-hotels";
+import hotelRoutes from "./routes/hotels";
 
 // Initialize Cloudinary connection with credentials from environment variables
 cloudinary.config({
@@ -37,7 +38,9 @@ app.use(cors({
 app.use(express.static(path.join(__dirname,"../../frontend/dist")))
 app.use("/api/auth",authRoute);
 app.use("/api/users",userRoute);
-app.use("/api/my-hotels",myHotelRoutes)
+app.use("/api/my-hotels", myHotelRoutes);// Owner routes: create/edit/manage your hotels
+app.use("/api/hotels", hotelRoutes); // Public routes for website visitors to search and view hotels      
+
 
 app.use((req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));
