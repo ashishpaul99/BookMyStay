@@ -1,7 +1,7 @@
 // Import the type for the registration form data
 import type { RegisterFormData } from "./pages/Register";
 import type {SignInFormData} from "./pages/SignIn"
-import type {HotelType} from "../../backend/src/shared/types"
+import type {HotelSearchResponse, HotelType} from "../../backend/src/shared/types"
 
 // Import environment variable for API base URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "" ;
@@ -140,3 +140,42 @@ export const updateMyHotelById = async (hotelFormData: FormData) => {
 
   return response.json();
 };
+
+
+
+
+// All parameters are strings because query parameters in URLs are sent as text.
+export type SearchParams={
+  destination?:string;
+  checkIn?:string;
+  CheckOut?:string;
+  adultCount?:string;
+  childCount?:string;
+  page?:string // used for pagination (to get results for a specific page)
+}
+
+// Function to fetch hotels from the backend based on search parameters
+export const searchHotels=async(searchParams:SearchParams):Promise<HotelSearchResponse>=>{
+
+    // Create a URLSearchParams object to build query parameters
+   const queryParams=new URLSearchParams();
+
+    // Append each search parameter to the query string
+   queryParams.append("destination", searchParams.destination || "")
+   queryParams.append("checkIn", searchParams.checkIn || "")
+   queryParams.append("checkOut", searchParams.CheckOut || "")
+   queryParams.append("adultCount", searchParams.adultCount || "")
+   queryParams.append("childCount", searchParams.childCount || "")
+   queryParams.append("page", searchParams.page|| "");
+
+   // Send GET request to the backend search endpoint with query parameters
+   const response=await fetch(`${API_BASE_URL}/api/hotels/search?${queryParams}`);
+
+   // If response is not OK (status not 200–299), throw an error
+   if(!response.ok){
+     throw new Error("Error fetching hotels");
+   }
+
+  // Parse and return the JSON response containing the hotel data
+   return response.json();
+}

@@ -15,8 +15,19 @@ const MyHotels = () => {
   }
 
   if (!hotelData || hotelData.length === 0) {
-    return <span>No Hotels found</span>;
-  }
+  return (
+    <div className="flex flex-col items-center justify-center p-8 text-center gap-4">
+      <span className="text-gray-600 text-lg">No hotels found</span>
+      <Link
+        to="/add-hotel"
+        className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-500 transition"
+      >
+        Add Hotel
+      </Link>
+    </div>
+  );
+}
+
 
   return (
     <div className="space-y-5">
