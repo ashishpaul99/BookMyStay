@@ -1,25 +1,39 @@
 import express, { Request, Response } from "express";
 import Hotel from "../models/hotel";
 import { HotelSearchResponse } from "../shared/types";
-import { query } from "express-validator";
 const router = express.Router();
 
 // GET /api/search
 router.get("/search", async (req: Request, res: Response) => {
   try {
     const query = constructSearchQuery(req.query);
-    let sortOptions={}
+
+    let sortOptions = {};
+    switch (req.query.sortOption) {
+      case "starRating":
+        sortOptions = { starRating: -1 };
+        break;
+      case "pricePerNightAsc":
+        sortOptions = { pricePerNight: 1 };
+        break;
+      case "pricePerNightDesc":
+        sortOptions = { pricePerNight: -1 };
+        break;
+    }
 
     // Pagination setup
     const pageSize = 5;
     const pageNumber = parseInt(req.query.page?.toString() || "1");
     const skip = (pageNumber - 1) * pageSize;
 
-    // Fetch paginated hotels
-    const hotels = await Hotel.find().skip(skip).limit(pageSize);
+    //fetch hotels with sorting and pagination
+    const hotels = await Hotel.find(query)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(pageSize);
 
     // Get total number of hotels
-    const total = await Hotel.countDocuments();
+    const total = await Hotel.countDocuments(query);
 
     // Build response
     const response: HotelSearchResponse = {
@@ -64,7 +78,7 @@ const constructSearchQuery = (queryParams: any) => {
   if (queryParams.facilities) {
     constructedQuery.facilities = {
       $all: Array.isArray(queryParams.facilities)
-        ? queryParams.facilities //string 
+        ? queryParams.facilities //string
         : [queryParams.facilities], //array of strings
     };
   }

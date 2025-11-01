@@ -891,9 +891,11 @@ export default SearchResultsCard;
 
 
 ## 15. Construct MongoDB Query Object Based on URL Search Parameters
+#### 1. Adding Filter Logic
 - Go to the `hotel.ts` file in `backend/src/routes.
 - Add the required filters inside the `constructSearchQuery()` function.
 - This function **builds a MongoDB query object** based on the filters provided by the user in the URL (for example: `?destination=paris&stars=5&maxPrice=3000`).
+`hotel.ts`
 ```tsx
 // 🔍 Construct MongoDB Query Object Based on URL Search Parameters
 const constructSearchQuery = (queryParams: any) => {
@@ -1086,7 +1088,439 @@ query = {
 - Then this query is passed to MongoDB: `Hotel.find(query)`
 - This function converts URL search filters into a **MongoDB query object** that can be used to fetch matching hotels.
 
+#### 2. Adding Sorting Logic
+1. Initialize empty object : `let sortOptions = {};
+	- This creates an empty object.
+	- You’ll later use this object to store the sorting criteria that MongoDB (or Mongoose) will use when fetching results.
+2. Switch statement : `switch (req.query.sortOptions) {`
+	- This checks the value of `req.query.sortOptions` — i.e., the **sort option** sent by the client via a URL query.
+	- Example:
+		- `/hotels?sortOptions=startRating`
+		- `/hotels?sortOptions=pricePerNightAsc`
+	
+3. Case 1 — sort by rating (descending)
+```tsx
+case "startRating":
+  sortOptions = { startRating: -1 };
+  break;
+```
+- If `sortOptions` in the query is `"startRating"`,  
+	- it sets sorting by `startRating` in **descending order** (`-1` = high → low).
+- MongoDB uses `1` for ascending, `-1` for descending.
+
+4. Case 2 — sort by price (ascending)
+```tsx
+case "pricePerNightAsc":
+  sortOptions = { pricePerNight: 1 };
+  break;
+```
+- This sorts hotels by `pricePerNight` from **low → high**.
+- ✅ Example:  ₹1000 → ₹2000 → ₹3000.
+
+5. Case 3 — sort by price (descending)
+```tsx
+case "pricePerNightDsc":
+  sortOptions = { pricePerNight: -1 };
+  break;
+```
+- This sorts hotels by `pricePerNight` from **high → low**.
+- ✅ Example:  ₹3000 → ₹2000 → ₹1000.
+
+6. How it’s used
+- Usually, you’ll pass this `sortOptions` object into your MongoDB query like this:
+```tsx
+const hotels = await Hotel.find(constructedQuery).sort(sortOptions);
+```
+This tells MongoDB to:
+- Apply the filters from `constructedQuery`
+- Then sort the resulting documents based on `sortOptions`.
+
 **`hotel.ts`**
 ```ts
-
+let sortOptions = {};
+switch (req.query.sortOptions) {
+  case "startRating":
+    sortOptions = { startRating: -1 };
+    break;
+  case "pricePerNightAsc":
+    sortOptions = { pricePerNight: 1 };
+    break;
+  case "pricePerNightDsc":
+    sortOptions = { pricePerNight: -1 };
+    break;
+}
 ```
+
+**`hotel.ts`**
+```ts
+import express, { Request, Response } from "express";
+import Hotel from "../models/hotel";
+import { HotelSearchResponse } from "../shared/types";
+import { query } from "express-validator";
+const router = express.Router();
+
+// GET /api/search
+router.get("/search", async (req: Request, res: Response) => {
+  try {
+    const query = constructSearchQuery(req.query);
+    
+    
+    let sortOptions = {};
+    switch (req.query.sortOptions) {
+      case "startRating":
+        sortOptions = { starRating: -1 }; // sort by rating high→low
+        break;
+      case "pricePerNightAsc":
+        sortOptions = { pricePerNight: 1 }; // sort by price low→high
+        break;
+      case "pricePerNightDsc":
+        sortOptions = { pricePerNight: -1 }; // sort by price high→low
+        break;
+    }
+
+    // Pagination setup
+    const pageSize = 5;
+    const pageNumber = parseInt(req.query.page?.toString() || "1");
+    const skip = (pageNumber - 1) * pageSize;
+
+    //fetch hotels with sorting and pagination
+    const hotels = await Hotel.find(query)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(pageSize);
+
+    // Get total number of hotels
+    const total = await Hotel.countDocuments(query);
+
+    // Build response
+    const response: HotelSearchResponse = {
+      data: hotels,
+      pagination: {
+        total, // total number of hotels
+        page: pageNumber, // current page
+        pages: Math.ceil(total / pageSize), // total number of pages
+      },
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error("Error fetching hotels:", error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+});
+
+  
+
+// 🔍 Construct MongoDB Query Object Based on URL Search Parameters
+const constructSearchQuery = (queryParams: any) => {
+  let constructedQuery: any = {};
+
+  if (queryParams.destination) {
+    constructedQuery.$or = [
+      { city: new RegExp(queryParams.destination, "i") },
+      { country: new RegExp(queryParams.destination, "i") },
+    ];
+  }
+
+  if (queryParams.adultCount) {
+    constructedQuery.adultCount = {
+      $gte: parseInt(queryParams.adultCount),
+    };
+  }
+
+  if (queryParams.childCount) {
+    constructedQuery.childCount = {
+      $gte: parseInt(queryParams.childCount),
+    };
+  }
+
+  if (queryParams.facilities) {
+    constructedQuery.facilities = {
+      $all: Array.isArray(queryParams.facilities)
+        ? queryParams.facilities //string
+        : [queryParams.facilities], //array of strings
+    };
+  }
+
+  if (queryParams.types) {
+    constructedQuery.type = {
+      $in: Array.isArray(queryParams.types)
+        ? queryParams.types
+        : [queryParams.types],
+    };
+  }
+
+
+  if (queryParams.stars) {
+    const starRatings = Array.isArray(queryParams.stars)
+      ? queryParams.stars.map((star: string) => parseInt(star))
+      : parseInt(queryParams.stars);
+    constructedQuery.starRating = { $in: starRatings };
+  }
+
+  
+
+  if (queryParams.maxPrice) {
+    constructedQuery.pricePerNight = {
+      $lte: parseInt(queryParams.maxPrice),
+    };
+  }
+
+  
+  return constructedQuery;
+};
+
+export default router;
+```
+
+
+## 16. Update the Fetch Request in the Frontend
+- Go to `apiClient.tsx` in `frontend/src/apiClient.ts`
+- Eg - URL: 
+```ts
+https://your-backend-domain.com/api/hotels/search?destination=Goa&checkIn=2025-11-10&checkOut=2025-11-15&adultCount=2&childCount=1&page=1&facilities=wifi,parking,pool&types=hotel,resort&star=4,5&maxPrice=5000&sortOptions=pricePerNightAsc
+```
+
+`apiClient.tsx`
+```tsx
+// All parameters are strings because query parameters in URLs are sent as text.
+export type SearchParams = {
+  destination?: string;
+  checkIn?: string;
+  CheckOut?: string;
+  adultCount?: string;
+  childCount?: string;
+  page?: string; // used for pagination (to get results for a specific page)
+  facilities: string[];
+  types: string[];
+  stars?: string[];
+  maxPrice?: string;
+  sortOption?: string;
+};
+
+// Function to fetch hotels from the backend based on search parameters
+export const searchHotels = async (
+  searchParams: SearchParams
+): Promise<HotelSearchResponse> => {
+
+  // Create a URLSearchParams object to build query parameters
+  const queryParams = new URLSearchParams();
+
+  // Append each search parameter to the query string
+  queryParams.append("destination", searchParams.destination || "");
+  queryParams.append("checkIn", searchParams.checkIn || "");
+  queryParams.append("checkOut", searchParams.CheckOut || "");
+  queryParams.append("adultCount", searchParams.adultCount || "");
+  queryParams.append("childCount", searchParams.childCount || "");
+  queryParams.append("page", searchParams.page || "");
+  queryParams.append("maxPrice",searchParams.maxPrice || "");
+  queryParams.append("sortOption",searchParams.sortOption || "");
+
+ searchParams.facilities?.forEach((facility)=>queryParams.append("facilities",facility)); 
+  searchParams.types?.forEach((type)=>queryParams.append("types",type));
+  searchParams.stars?.forEach((star)=>queryParams.append("stars",star))
+
+  
+  // Send GET request to the backend search endpoint with query parameters
+  const response = await fetch(
+    `${API_BASE_URL}/api/hotels/search?${queryParams}`
+  );
+
+  // If response is not OK (status not 200–299), throw an error
+  if (!response.ok) {
+    throw new Error("Error fetching hotels");
+  }
+
+  // Parse and return the JSON response containing the hotel data
+  return response.json();
+};
+```
+## 17. Building Filter UI
+- Build UI components to capture the list of filters selected by the user.
+- Each filter criterion should have its **own state object**, and since we’re storing the selections in state, it becomes easy to **pass them as search parameters** in our fetch request.
+   ![](Images/Pasted%20image%2020251031234750.png)
+
+#### 1. Property Rating
+- Create a `StarRatingFilter.tsx` file inside `frontend/src/components`.
+- Store the selected star rating state in the **parent component** (e.g., the search page).
+- Pass the state and handler functions as **props** to `StarRatingFilter`, so that all the state remains **centralized** in the search page.
+`StarRatingFilter.tsx` 
+```tsx
+type Props={
+   selectedStars:string[];
+   onChange:(event:React.ChangeEvent<HTMLInputElement>)=>void;//type for event whenever a check box is checked
+}
+
+const StarRatingFilter=({selectedStars,onChange}:Props)=>{
+  return(
+    <div className="border-b border-slate-300 pb-5">
+        <h4 className="text-md font-semibold">Property Rating</h4>
+        {["5","4","3","2","1"].map((star)=>(
+            <label className="flex items-center space-x-2">
+                <input type="checkbox" className="rounded" value={star}
+                checked={selectedStars.includes(star)}
+                onChange={onChange}
+                />
+                <span>{star} Stars</span>
+            </label>
+        ))
+        }
+    </div>
+  )
+}
+export default StarRatingFilter;
+```
+
+#### 2. Hotel Types Filter
+  - Create `HotelTypesFilter.tsx` file in `frontend/src/components`
+`HotelTypesFilter.tsx`
+```tsx
+import { hotelTypes } from "../config/hotel-options-config";
+type Props = {
+  selectedHotelTypes: string[];
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+};
+
+const HotelTypesFilter = ({ selectedHotelTypes, onChange }: Props) => {
+  return (
+    <div className="border-b border-slate-300 pb-5">
+      <h4 className="text-md font-semibold mb-2">Hotel Type</h4>
+      {hotelTypes.map((hotelType) => (
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            className="rounded"
+            value={hotelType}
+            checked={selectedHotelTypes.includes(hotelType)}
+            onChange={onChange}
+          />
+          <span>{hotelType}</span>
+        </label>
+      ))}
+    </div>
+  );
+};
+
+export default HotelTypesFilter;
+```
+
+
+#### 3. Hotel Facilities Filter
+  - Create `HotelFacilitiesFilter.tsx` file in `frontend/src/compoents`.
+`HotelFacilitiesFilter.tsx`
+  ```tsx
+import { hotelFacilities } from "../config/hotel-options-config";
+type Props = {
+  selectedHotelFacilities: string[];
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+};
+
+const HotelFacilitiesFilter = ({ selectedHotelFacilities, onChange }: Props) => {
+  return (
+    <div className="border-b border-slate-300 pb-5">
+      <h4 className="text-md font-semibold mb-2">Facilities</h4>
+      {hotelFacilities.map((hotelFacility) => (
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            className="rounded"
+            value={hotelFacility}
+            checked={selectedHotelFacilities.includes(hotelFacility)}
+            onChange={onChange}
+          />
+          <span>{hotelFacility}</span>
+        </label>
+      ))}
+    </div>
+  );
+};
+export default HotelFacilitiesFilter;
+  ```
+  
+#### 4.Hotel Price Filter
+  - Create `HotelPriceFilter.tsx` file in `frontend/src/components`
+`HotelPriceFilter.tsx`
+```tsx
+type Props = {
+  selectedPrice?: number;
+  onChange: (value?: number) => void;
+};
+
+const HotelPriceFilter = ({ selectedPrice, onChange }: Props) => {
+  return (
+    <div>
+      <h4 className="text-md font-semibold mb-2">Max Price</h4>
+      <select
+        className="p-2 border rounded-md w-full"
+        value={selectedPrice}
+        onChange={(event) =>
+          onChange(
+            event.target.value ? parseInt(event.target.value) : undefined
+          ) // user can select default option
+        }
+      >
+        <option value="">Select Max Price</option>
+        {[200,400,600,800,1000].map((price)=>(
+            <option value={price}>{price}</option>
+        ))
+        }
+      </select>
+    </div>
+  );
+};
+export default HotelPriceFilter;
+```
+
+#### 🧩 **`event: React.ChangeEvent<HTMLInputElement>`**
+1. **`event`** → The parameter name (the event object that React passes when the input changes)
+2. **`React.ChangeEvent`** → A React-specific wrapper around the browser’s native change event.
+3. **`<HTMLInputElement>`** → Specifies that this event comes from an `<input>` element (not `<select>` or `<textarea>`).
+
+ 4. If the user **checks** the box →  
+    `event.target.checked` → ✅ `true`
+5. If the user **unchecks** the box →  
+   `event.target.checked` → ❌ `false`
+#### 5. Sorting
+`Search.tsx`
+```tsx
+<select
+  value={sortOption}
+  onChange={(event) => setSortOption(event.target.value)}
+  className="p-2 border rounded-md"
+>
+  <option value="">Sort By</option>
+  <option value="starRating">Star Rating</option>
+  <option value="pricePerNightAsc">Price Per Night (Low to High)</option>
+  <option value="pricePerNightDesc">Price Per Night (High to Low)</option>
+</select>
+```
+
+## 18. Search Page e2e Test
+`11:23:00`
+`search-hotels.spec.ts`
+```ts
+import {test,expect} from "@playwright/test"
+const UI_URL = "http://localhost:5173/";
+
+test.beforeEach( async ({ page }) => {
+  await page.goto(UI_URL);
+  await page.getByRole("link", { name: "Sign In" }).click();
+  await expect(page.getByRole("heading", { name: "Sign In Page" })).toBeVisible();
+  await page.locator('[name="email"]').fill("codevwithpaul@gmail.com");
+  await page.locator('[name="password"]').fill("ashish");
+  await page.getByRole("button", { name: "Sign In" }).click();
+  await expect(page.getByText("Logged In Successfully!")).toBeVisible();
+});
+
+test("should show hotel search results",async ({page})=>{
+  await page.goto(UI_URL);
+  await page.getByPlaceholder("Where are you going?").fill("Test City");
+  await page.getByRole("button",{name:"Search"}).click();
+  await expect(page.getByText("Hotels found in Test City")).toBeVisible();
+  await expect(page.getByRole("link",{name:"Test Hotel"})).toBeVisible();
+})
+```
+
+## 19. Search Page Deployment
+- Push code to GitHub.
+- Deploy it to render
